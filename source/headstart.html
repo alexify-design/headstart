@@ -1,0 +1,852 @@
+<title>HeadStart</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=DM+Sans:wght@400;500;700&display=swap">
+<style>
+/* Layout: phone = full-screen views + bottom tabs; laptop (>=900px) = sidebar + wide content, focus screens full-bleed */
+:root{
+  --bg:#F5F3FF; --card:#FFFFFF; --ink:#1B1530; --muted:#5D5875; --line:#E4E0F5; --soft:#F1EEFB;
+  --violet:#5B3DF5; --violet-2:#4A2FD6; --violet-soft:#E9E5FB; --violet-ink:#3D22C9;
+  --sun:#FFC53D; --sun-soft:#FFF1D0; --sun-ink:#6B4300;
+  --mint:#5FD4A0; --mint-2:#4CC08D; --mint-soft:#DDF3E9; --mint-ink:#0B6B47;
+  --coral:#F26B5B; --coral-soft:#FFE1DC; --coral-ink:#9A1C0E;
+  --night:#1B1530; --night-2:#2E2647; --night-3:#4A3F70; --night-ink:#D9D3F5;
+  --on-color:#FFFFFF; --dark-ink:#1B1530;
+  --display:'Bricolage Grotesque', 'Trebuchet MS', system-ui, sans-serif;
+  --body:'DM Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#120E22; --card:#1E1834; --ink:#F1EEFF; --muted:#ABA4C8; --line:#2E2747; --soft:#262040;
+  --violet-soft:#2B2356; --violet-ink:#C3B6FF; --sun-soft:#3A2E12; --sun-ink:#FFD97A;
+  --mint-soft:#12342A; --mint-ink:#86E6BC; --coral-soft:#3A1C1A; --coral-ink:#FFB0A6; color-scheme:dark }}
+:root[data-theme="dark"]{
+  --bg:#120E22; --card:#1E1834; --ink:#F1EEFF; --muted:#ABA4C8; --line:#2E2747; --soft:#262040;
+  --violet-soft:#2B2356; --violet-ink:#C3B6FF; --sun-soft:#3A2E12; --sun-ink:#FFD97A;
+  --mint-soft:#12342A; --mint-ink:#86E6BC; --coral-soft:#3A1C1A; --coral-ink:#FFB0A6; color-scheme:dark }
+
+:root{--sat:env(safe-area-inset-top,0px);--sab:env(safe-area-inset-bottom,0px)}
+html,body{height:var(--app-h,100%);margin:0;overflow:hidden}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;-webkit-font-smoothing:antialiased}
+body[data-tone="violet"]{background:var(--violet)} body[data-tone="night"]{background:var(--night)} body[data-tone="sun"]{background:var(--sun)} body[data-tone="mint"]{background:var(--mint)}
+*{box-sizing:border-box}
+/* The app fills the real screen (JS sets --app-h; iOS home-screen apps report a short height otherwise) */
+#app{position:absolute;left:0;right:0;top:0;height:var(--app-h,100dvh);display:flex;flex-direction:column;overflow:hidden}
+.scroller{overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch;overscroll-behavior-y:contain;scrollbar-width:none}
+.scroller::-webkit-scrollbar{display:none}
+/* Glass header: sticks to the top, gets frostier as you scroll */
+.hdr{position:sticky;top:0;z-index:15;margin-inline:-20px;padding:calc(12px + var(--sat)) 20px 12px;-webkit-backdrop-filter:blur(18px) saturate(1.6);backdrop-filter:blur(18px) saturate(1.6);isolation:isolate}
+.full-in>.hdr{margin-inline:-24px;padding-inline:24px}
+.hdr::before{content:"";position:absolute;inset:0;z-index:-1;background:var(--hdr,var(--bg));opacity:calc(.35 + .55*var(--s,0));border-bottom:1px solid rgba(128,120,170,calc(.35*var(--s,0)))}
+.hdr .h1,.hdr .h2{transform-origin:left center;transform:scale(calc(1 - .1*var(--s,0)));transition:transform .08s linear}
+.content.has-hdr{padding-top:0!important}
+.full-in.has-hdr{padding-top:0!important}
+.shell{--hdr:var(--bg)}
+.t-light{--hdr:var(--bg)} .t-violet{--hdr:#5B3DF5} .t-night{--hdr:#1B1530} .t-sun{--hdr:#FFC53D} .t-mint{--hdr:#5FD4A0}
+/* Scroll reveal: cards rise out of a soft blur as they come on screen */
+.rv{opacity:0;transform:translateY(18px) scale(.98);filter:blur(6px);transition:opacity .55s ease,transform .55s cubic-bezier(.2,1,.3,1),filter .55s ease}
+.rv.in{opacity:1;transform:none;filter:none}
+/* Date picker hidden over a badge or chip */
+.pick{position:relative;overflow:hidden}
+.pick input{position:absolute;inset:0;opacity:0;width:100%;height:100%;font-size:16px;cursor:pointer;-webkit-appearance:none;appearance:none}
+button,a,input{font:inherit;color:inherit}
+a{text-decoration:none}
+button{cursor:pointer;border:none;background:none}
+[data-go],[data-act],button,a{transition:transform .12s ease,filter .12s ease;-webkit-tap-highlight-color:transparent}
+[data-go]:active,[data-act]:active{transform:scale(.96);filter:brightness(.93)}
+:focus-visible{outline:3px solid var(--sun);outline-offset:2px}
+h1,h2,h3{margin:0;font-family:var(--display);font-weight:800;text-wrap:balance}
+p{margin:0}
+svg{flex:none}
+.cta-bar{display:flex;flex-direction:column;gap:8px}
+@media (max-width:899px){.cta-bar{position:sticky;bottom:0;z-index:5;padding:14px 0 6px;background:linear-gradient(to bottom,transparent,var(--bg) 22px)}}
+body.phone-mode .cta-bar{position:sticky;bottom:0;z-index:5;padding:14px 0 6px;background:linear-gradient(to bottom,transparent,var(--bg) 22px)}
+
+.h1{font-size:clamp(30px,6vw,40px);line-height:1.05}
+.h2{font-size:24px;line-height:1.1}
+.lead{font-size:16px;line-height:1.45;color:var(--muted)}
+.label{font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.stack{display:flex;flex-direction:column;gap:12px}
+.stack-s{display:flex;flex-direction:column;gap:8px}
+.row{display:flex;align-items:center;gap:12px}
+.wrap{flex-wrap:wrap}
+.grow{flex:1;min-width:0}
+.card{background:var(--card);border-radius:22px;padding:18px}
+.dash{border:2px dashed var(--line);border-radius:18px;padding:10px 12px}
+.btn{display:flex;align-items:center;justify-content:center;gap:10px;min-height:56px;padding:0 20px;border-radius:18px;background:var(--violet);color:var(--on-color);font-weight:700;font-size:17px;width:100%}
+.btn.light{background:var(--card);color:var(--ink)}
+.btn.dark{background:var(--night);color:#fff}
+.btn.sun{background:var(--sun);color:var(--dark-ink)}
+.btn.mint{background:var(--mint);color:var(--dark-ink)}
+.btn.line{background:transparent;border:2px solid var(--line);color:var(--ink)}
+.btn.ghost{background:transparent;color:var(--violet-ink);min-height:44px;font-size:15px}
+.btn.sm{min-height:44px;font-size:15px;border-radius:14px;width:auto}
+.icon-btn{width:44px;height:44px;border-radius:14px;background:var(--card);display:flex;align-items:center;justify-content:center;flex:none}
+.chip{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:10px;background:var(--soft);font-size:13px;font-weight:700}
+.chip.sun{background:var(--sun-soft);color:var(--sun-ink)}
+.chip.mint{background:var(--mint-soft);color:var(--mint-ink)}
+.chip.coral{background:var(--coral-soft);color:var(--coral-ink)}
+.chip.violet{background:var(--violet-soft);color:var(--violet-ink)}
+.opt{border-radius:16px;border:2px solid var(--line);background:var(--card);min-height:52px;font-weight:700}
+.opt.on{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.toggle{width:54px;height:32px;border-radius:16px;background:var(--line);padding:3px;display:flex;flex:none}
+.toggle span{width:26px;height:26px;border-radius:13px;background:#fff;transition:transform .2s}
+.toggle.on{background:var(--violet)}
+.toggle.on span{transform:translateX(22px)}
+.bar{height:10px;border-radius:5px;background:var(--line);overflow:hidden}
+.bar i{display:block;height:100%;border-radius:5px;background:var(--violet)}
+.dots{display:flex;gap:6px}
+.dots span{width:6px;height:6px;border-radius:3px;background:var(--line)}
+.dots span.on{width:22px;background:var(--violet)}
+.tnum{font-variant-numeric:tabular-nums}
+
+/* Full-screen views */
+.full{flex:1;min-height:0;display:block}
+.full-in{width:100%;max-width:520px;min-height:100%;margin:0 auto;display:flex;flex-direction:column;gap:20px;padding-top:calc(28px + var(--sat));padding-bottom:calc(28px + var(--sab));padding-left:max(24px,env(safe-area-inset-left,0px));padding-right:max(24px,env(safe-area-inset-right,0px))}
+.t-light{background:var(--bg);color:var(--ink)}
+.t-violet{background:var(--violet);color:#fff}
+.t-night{background:var(--night);color:#fff}
+.t-sun{background:var(--sun);color:var(--dark-ink)}
+.t-mint{background:var(--mint);color:var(--dark-ink)}
+.t-violet .lead,.t-night .lead{color:var(--night-ink)}
+.t-sun .lead,.t-mint .lead{color:#3B3552}
+.t-violet .icon-btn{background:var(--violet-2)}
+.t-night .icon-btn{background:var(--night-2)}
+.t-mint .icon-btn{background:var(--mint-2)}
+.t-sun .card,.t-mint .card{background:#fff;color:var(--dark-ink)}
+.t-night .card{background:var(--night-2);color:#fff}
+.bottom{margin-top:auto;display:flex;flex-direction:column;gap:8px}
+
+/* App shell */
+.shell{flex:1;min-height:0;display:flex;flex-direction:column}
+.side{display:none}
+.main{flex:1;min-width:0;min-height:0;display:flex;flex-direction:column}
+.content{flex:1 0 auto;width:100%;max-width:1080px;margin:0 auto;display:flex;flex-direction:column;gap:16px;padding-top:calc(20px + var(--sat));padding-bottom:28px;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px))}
+.tabs{flex:none;position:relative;background:var(--card);border-top:1px solid var(--line);display:grid;grid-auto-flow:column;grid-auto-columns:1fr;padding-top:6px;padding-bottom:max(6px,calc(var(--sab) - 8px));padding-left:env(safe-area-inset-left,0px);padding-right:env(safe-area-inset-right,0px);z-index:20}
+.tab{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;min-height:50px;font-size:11px;font-weight:700;color:var(--muted)}
+.tab.on{color:var(--violet-ink)}
+.cols{display:grid;gap:16px}
+.narrow{max-width:640px;width:100%}
+
+.view-toggle{display:none}
+@media (min-width:900px){
+  body:not(.phone-mode) .shell{flex-direction:row}
+  body:not(.phone-mode) .side{display:flex;flex-direction:column;gap:6px;width:250px;flex:none;background:var(--card);border-right:1px solid var(--line);padding:28px 18px;overflow-y:auto}
+  body:not(.phone-mode) .tabs{display:none}
+  body:not(.phone-mode) .hdr{margin-inline:-40px;padding-inline:40px}
+  body:not(.phone-mode) .content{padding-block:36px 48px;padding-left:max(40px,env(safe-area-inset-left,0px));padding-right:max(40px,env(safe-area-inset-right,0px))}
+  body:not(.phone-mode) .cols{grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);align-items:start}
+  .side a.nav{display:flex;align-items:center;gap:12px;padding:12px 14px;border-radius:14px;font-weight:700;color:var(--muted)}
+  .side a.nav.on{background:var(--violet-soft);color:var(--violet-ink)}
+  body:not(.phone-mode) .full-in{max-width:560px;padding-block:56px}
+  .view-toggle{display:flex;position:fixed;right:20px;bottom:20px;z-index:60;align-items:center;gap:8px;height:46px;padding:0 16px;border-radius:23px;background:var(--ink);color:var(--bg);font-weight:700;box-shadow:0 8px 24px rgba(0,0,0,.25)}
+  /* Phone preview on a laptop */
+  body.phone-mode{background:var(--soft)}
+  body.phone-mode #app{position:relative;width:390px;height:min(844px,calc(100vh - 48px));margin:24px auto;border-radius:48px;outline:12px solid #0E0C14;background:var(--bg);--sat:44px;--sab:20px}
+}
+@media (min-width:900px){body:not(.phone-mode) .scrim{align-items:center} body:not(.phone-mode) .sheet{border-radius:28px}}
+
+/* Buddy motion */
+.bob{animation:bob 2.4s ease-in-out infinite}
+.blink{transform-box:fill-box;transform-origin:center;animation:blink 3.4s ease-in-out infinite}
+.mouth-talk{transform-box:fill-box;transform-origin:center;transform:scaleY(.4)}
+.talking .mouth-talk{animation:talk .28s ease-in-out infinite}
+.arm{transform-box:fill-box;transform-origin:50% 100%;animation:wave 2.4s ease-in-out infinite}
+.talking .arm{animation-duration:.45s}
+@keyframes bob{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-6px) rotate(-3deg)}}
+@keyframes blink{0%,90%,100%{transform:scaleY(1)}94%{transform:scaleY(.1)}}
+@keyframes talk{0%,100%{transform:scaleY(.35)}50%{transform:scaleY(1)}}
+@keyframes wave{0%,100%{transform:rotate(-10deg)}50%{transform:rotate(25deg)}}
+@keyframes speak{0%{opacity:0;transform:translateY(18px) scale(.96);filter:blur(6px)}14%{opacity:1;transform:none;filter:blur(0)}78%{opacity:1;transform:translateY(-4px)}100%{opacity:0;transform:translateY(-46px) scale(.97);filter:blur(8px)}}
+@keyframes rise{from{opacity:0;transform:translateY(18px);filter:blur(6px)}to{opacity:1;transform:none;filter:blur(0)}}
+@keyframes pop{from{opacity:0;transform:translateY(20px) scale(.94)}to{opacity:1;transform:none}}
+@keyframes dot{0%,80%,100%{opacity:.3;transform:translateY(0)}40%{opacity:1;transform:translateY(-4px)}}
+@keyframes breathe{0%,100%{transform:scale(1)}50%{transform:scale(1.03)}}
+@keyframes up{from{transform:translateY(100%)}to{transform:none}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes fill{from{width:0}to{width:100%}}
+@keyframes wiggle{0%,100%{transform:rotate(0)}25%{transform:rotate(-6deg)}75%{transform:rotate(6deg)}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+.pop{animation:pop .45s cubic-bezier(.2,1.4,.4,1) both}
+.view-in{animation:fade .25s ease-out both}
+.glass{padding:12px 16px;border-radius:20px 20px 20px 6px;background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.45);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);box-shadow:0 8px 24px rgba(20,10,80,.25);color:#fff;font-size:18px;font-weight:600;line-height:1.35;max-width:240px}
+@media (prefers-reduced-motion: reduce){*,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition:none!important}}
+
+/* Quest map */
+.qmap{background:var(--night);color:#fff;border-radius:26px;padding:22px 20px;display:flex;flex-direction:column;gap:6px}
+.qnode{display:flex;align-items:center;gap:12px}
+.qnode button{width:50px;height:50px;border-radius:25px;border:4px solid transparent;background:var(--night-2);color:#fff;font-weight:800;font-size:17px;flex:none}
+.qnode.done button{background:#12A26E}
+.qnode.sel button{background:var(--sun);color:var(--dark-ink);border-color:#fff}
+.qnode span{font-size:14px;font-weight:700;color:#BDB4E6;max-width:220px;line-height:1.25}
+.qnode.sel span{color:#fff}
+
+/* Clock */
+.ring{border-radius:50%;display:flex;align-items:center;justify-content:center}
+.clock{font-family:var(--display);font-weight:800;line-height:1}
+
+/* Sheet */
+.scrim{position:absolute;inset:0;background:rgba(27,21,48,.5);display:flex;align-items:flex-end;justify-content:center;z-index:40;animation:fade .2s ease-out both}
+.sheet{width:100%;max-width:520px;background:var(--card);color:var(--ink);border-radius:28px 28px 0 0;padding:22px 24px calc(32px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:14px;animation:up .35s cubic-bezier(.2,1,.3,1) both}
+</style>
+
+<div id="app"></div>
+<button id="viewToggle" class="view-toggle" type="button"></button>
+
+<script>
+(function(){
+// ---------- Data ----------
+const ASG = {
+  climate:{title:'Climate Change Report',cls:'ENV101',dueT:[23,59],dueIn:5,color:'#12A26E',
+    brief:[['Write','1,500 words on how climate change hits Southeast Asia'],['Use','at least 3 academic sources'],['Hand in','a PDF on Teams']],
+    rubric:['Argument 40%','Research 30%','Writing 20%','References 10%'],
+    quests:[['Read the brief properly',10,'From your brief','The question is about Southeast Asia, not the whole world. Knowing that now saves a rewrite later.'],
+      ['Find 10 maybe-sources',25,'From your brief','You need at least 3 academic sources. Grab 10 quick ones first, then pick the best.'],
+      ['Keep the best 3',25,'Rubric · Research 30%','Research is almost a third of the grade. Strong sources are easy marks.'],
+      ['Outline: one point per part',25,'Rubric · Argument 40%','Argument is the biggest chunk. A clear outline makes writing way faster.'],
+      ['Write the draft (2 × 45 min)',90,'From your time','Writing gets two 45-min blocks. No need to finish in one go.'],
+      ['Check, fix and add references',25,'Rubric · Writing 20% + Refs 10%','30% of the grade is writing and references. Easy points people lose by rushing.']]},
+  poster:{title:'Poster draft',cls:'ICD382',dueT:[9,0],dueIn:3,color:'#FFB020',
+    brief:[['Design','one A2 poster about a social movement'],['Show','at least 3 thumbnail sketches'],['Hand in','PDF + sketches on Teams']],
+    rubric:['Concept 40%','Composition 30%','Type 20%','Process 10%'],
+    quests:[['Read the brief properly',10,'From your brief','A2 poster on a social movement. Pick one you care about, it shows.'],
+      ['Pick your movement + one-line message',15,'Rubric · Concept 40%','Concept is the biggest chunk. One clear message beats three clever ones.'],
+      ['Grab 15 reference images',20,'Rubric · Concept 40%','Save them to one board. No judging yet.'],
+      ['Sketch 3 quick thumbnails',25,'From your brief','The brief asks for 3+ thumbnails. Tiny and fast.'],
+      ['Build the layout + type',45,'Rubric · Composition 30% + Type 20%','Half the grade is layout and type. Big headline first.'],
+      ['Export PDF + process page',15,'Rubric · Process 10%','Easy 10%: show your sketches next to the final.']]},
+  mockups:{title:'Final mockups',cls:'ICD366',dueT:[23,59],dueIn:9,color:'#3B82F6',
+    brief:[['Mock up','3 products for one brand'],['Photograph','them on a clean background'],['Hand in','a 6-page PDF']],
+    rubric:['Craft 40%','Concept 30%','Presentation 30%'],
+    quests:[['Read the brief properly',10,'From your brief','3 products, one brand, photographed. Check the page count now.'],
+      ['List the 3 products + sizes',15,'Rubric · Concept 30%','Deciding sizes early stops you reprinting later.'],
+      ['Print + cut test dielines',45,'Rubric · Craft 40%','Craft is 40%. Test prints catch mistakes before the final.'],
+      ['Build the final mockups',60,'Rubric · Craft 40%','Clean folds and edges. Slow is fine here.'],
+      ['Photo shoot on clean background',45,'Rubric · Presentation 30%','Good light, good marks. A window works.'],
+      ['Lay out the 6-page PDF',45,'From your brief','One page per product, plus cover and process.']]},
+  book:{title:'Research book',cls:'ICD357',dueT:[17,0],dueIn:12,color:'#7C5CFF',
+    brief:[['Turn','your research process into a book'],['Include','interviews, journey maps and insights'],['Hand in','PDF + one printed copy']],
+    rubric:['Research 40%','Insight 30%','Layout 20%','Writing 10%'],
+    quests:[['Read the brief properly',10,'From your brief','The book is your whole research story. Check what must be inside.'],
+      ['Gather all files in one folder',25,'From your brief','Interviews, maps, photos. Hunting for files later eats hours.'],
+      ['Pick the 10 strongest insights',30,'Rubric · Insight 30%','Quality over quantity.'],
+      ['Plan the chapters',25,'Rubric · Research 40%','Show the journey step by step.'],
+      ['Lay out spreads (3 × 45 min)',135,'Rubric · Layout 20%','Three sessions, not one all-nighter.'],
+      ['Captions + proofread',45,'Rubric · Writing 10%','Short captions, no typos.'],
+      ['Export + print',30,'From your brief','Printing takes a day at the shop.']]},
+  exhibition:{title:'Exhibition prototype',cls:'ICD357 · group of 4',dueT:[10,0],dueIn:16,color:'#7C5CFF',group:true,
+    brief:[['Build','a clickable prototype of your app'],['Set up','a booth that shows your research'],['Present','5 minutes to visitors']],
+    rubric:['Prototype 40%','Link to research 30%','Presentation 30%'],
+    quests:[['Read the brief together',10,'From your brief','Prototype, booth and a 5-min talk. Everyone reads it once.','Everyone'],
+      ['Split roles',15,'Group tip','Clear roles stop the "who is doing this?" panic.','Everyone'],
+      ['Finish the key screens',90,'Rubric · Prototype 40%','Key screens first, extras later.','Alex + Mint'],
+      ['Test with 3 students',45,'Rubric · Prototype 40%','Real feedback gives you a story to tell.','Ken + Bam'],
+      ['Booth boards from research',60,'Rubric · Link to research 30%','Show why each feature exists.','Ken'],
+      ['Rehearse the 5-min pitch',30,'Rubric · Presentation 30%','Time it. Practise twice.','Everyone']]},
+  essay:{title:'Marketing essay',cls:'MKT201',dueT:[23,59],dueIn:7,color:'#F26B5B',
+    brief:[['Write','1,200 words on a brand that changed its image'],['Use','2 real campaign examples'],['Hand in','a PDF on the class page']],
+    rubric:['Analysis 40%','Examples 30%','Structure 20%','Referencing 10%'],
+    quests:[['Read the brief properly',10,'You added this brief','One brand, one change. Pick a story you already know a bit.'],
+      ['Pick your brand',15,'Rubric · Analysis 40%','A brand you like makes the analysis easier to write.'],
+      ['Find 2 campaigns',25,'Rubric · Examples 30%','Two strong examples carry a third of the grade.'],
+      ['Outline in 5 bullets',20,'Rubric · Structure 20%','Intro, before, change, after, so what.'],
+      ['Messy draft (2 × 45 min)',90,'From your time','Ugly first. Fix later.'],
+      ['Fix + references',25,'Rubric · Referencing 10%','Easy points people skip.']]}
+};
+const ALEX_LIST=['climate','poster','mockups','book','exhibition'];
+
+// ---------- State ----------
+const S={how:'suggest',own:{},useOwn:{},persona:'alex',assign:'climate',planned:{},remind:{},timePick:'4h',qsel:1,tiny:{},
+  buddy:'#FFC53D',glasses:true,apps:{TikTok:1,Instagram:1,YouTube:1,Games:1},
+  pick:0,cal:true,snooze:false,left:25*60-372,paused:false,pass:false,mood:null,
+  checks:{},meTab:'Stickers',clsFilter:'All',gStep:0,addStep:0,snapped:false,
+  ployBuddy:'Bao',ployApps:{TikTok:1,Instagram:1,Netflix:1},style:'remind',tinyCal:false,offer:true,
+  tinyPick:1,lock:true,feel:'Stressful',next:0,sprintLeft:45*60-412,stickerSel:0,remindOpts:{a:1,b:1,c:1,d:1},
+  epoch:null,sched:{},draft:{},log:[],xp:0,submitted:{},buddyName:'Mochi',last:null,t:null};
+let route='welcome', stack=[], timers=[];
+const A=()=>ASG[S.assign]||ASG.climate;
+const isPloy=()=>S.persona==='ploy';
+
+// ---------- Small helpers ----------
+const ico={
+ back:'<path d="M15 5l-7 7 7 7"/>',close:'<path d="M6 6l12 12M18 6L6 18"/>',home:'<path d="M4 11l8-7 8 7v9H4z"/>',
+ classes:'<path d="M4 5h6v14H4zM14 5h6v14h-6z"/>',focus:'<circle cx="12" cy="13" r="8"/><path d="M12 9v4l3 2M9 2h6"/>',
+ me:'<circle cx="12" cy="8" r="4"/><path d="M4 21c1-4 4-6 8-6s7 2 8 6"/>',check:'<path d="M5 12l5 5 9-10"/>',
+ bell:'<path d="M6 8a6 6 0 0112 0c0 7 3 8 3 8H3s3-1 3-8"/><path d="M10 20a2 2 0 004 0"/>',
+ cal:'<rect x="3" y="5" width="18" height="16" rx="3"/><path d="M3 10h18M8 3v4M16 3v4"/>',
+ laptop:'<rect x="4" y="5" width="16" height="11" rx="2"/><path d="M2 19h20"/>',
+ flame:'<path d="M12 3c1 4 5 5 5 10a5 5 0 01-10 0c0-2 1-3 2-4 0 2 1 3 2 3 0-3-1-5 1-9z"/>',
+ plus:'<path d="M12 5v14M5 12h14"/>',play:'<path d="M7 4l13 8-13 8z" fill="currentColor" stroke="none"/>',
+ lock:'<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 018 0v3"/>',
+ school:'<path d="M3 10l9-5 9 5-9 5-9-5z"/><path d="M7 12v5c3 2 7 2 10 0v-5"/>'
+};
+const I=(n,s=20,w=2.3)=>`<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${ico[n]}</svg>`;
+function buddy(color,size,o={}){
+  const mouth=o.mood==='talk'?'<ellipse class="mouth-talk" cx="32" cy="44" rx="6" ry="5" fill="#1B1530"/>'
+   :o.mood==='flat'?'<path d="M26 44h12" stroke="#1B1530" stroke-width="3" stroke-linecap="round"/>'
+   :o.mood==='sleep'?'<path d="M28 44h8" stroke="#1B1530" stroke-width="3" stroke-linecap="round"/>'
+   :o.mood==='wide'?'<path d="M22 42c5 6 15 6 20 0" stroke="#1B1530" stroke-width="3" fill="none" stroke-linecap="round"/>'
+   :'<path d="M24 42c4 4 12 4 16 0" stroke="#1B1530" stroke-width="3" fill="none" stroke-linecap="round"/>';
+  const eyes=o.mood==='sleep'?'<path d="M18 31c3 2 7 2 10 0M36 31c3 2 7 2 10 0" stroke="#1B1530" stroke-width="3" fill="none" stroke-linecap="round"/>'
+   :'<g class="blink"><circle cx="24" cy="30" r="4" fill="#1B1530"/><circle cx="40" cy="30" r="4" fill="#1B1530"/></g>';
+  const gl=o.glasses?'<circle cx="24" cy="30" r="7" fill="none" stroke="#1B1530" stroke-width="2.5"/><circle cx="40" cy="30" r="7" fill="none" stroke="#1B1530" stroke-width="2.5"/><path d="M31 30h2" stroke="#1B1530" stroke-width="2.5"/>':'';
+  const arm=o.arm?`<rect class="arm" x="56" y="26" width="9" height="18" rx="4.5" fill="${color}"/>`:'';
+  return `<svg ${o.id?`id="${o.id}"`:''} class="${o.cls||''}" width="${size}" height="${size}" viewBox="-4 0 76 64" aria-hidden="true">${arm}<rect x="4" y="8" width="56" height="52" rx="24" fill="${color}"/>${eyes}${gl}<circle cx="16" cy="39" r="3.5" fill="#FF9E7A" opacity=".6"/><circle cx="48" cy="39" r="3.5" fill="#FF9E7A" opacity=".6"/>${mouth}</svg>`;
+}
+const myBuddy=(size,o={})=>isPloy()?buddy('#5FD4A0',size,o):buddy(S.buddy,size,{glasses:S.glasses,...o});
+const back=(cls='')=>`<button class="icon-btn ${cls}" data-act="back" aria-label="Back">${I('back')}</button>`;
+const later=(fn,ms)=>{timers.push(setTimeout(fn,ms))};
+const every=(fn,ms)=>{timers.push(setInterval(fn,ms))};
+const mmss=s=>String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');
+
+// ---------- Real dates + time ----------
+const DAY=864e5,DOWS=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'],DOW=DOWS.map(d=>d.slice(0,3)),MON=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const mid=t=>{const x=new Date(t);x.setHours(0,0,0,0);return x.getTime()};
+const addDays=(t,n)=>{const x=new Date(t);x.setDate(x.getDate()+n);return x.getTime()};
+const today0=()=>mid(Date.now());
+const epoch=()=>{if(!S.epoch)S.epoch=today0();return S.epoch};
+const dueAt=k=>{const a=ASG[k],x=new Date(addDays(epoch(),a.dueIn));x.setHours(a.dueT[0],a.dueT[1],0,0);return x.getTime()};
+const daysTo=t=>Math.round((mid(t)-today0())/DAY);
+const left=k=>daysTo(dueAt(k));
+const fTime=t=>{const d=new Date(t);let h=d.getHours(),m=d.getMinutes();const ap=h>=12?'pm':'am';h=h%12||12;return h+(m?':'+String(m).padStart(2,'0'):'')+' '+ap};
+const fDate=t=>{const d=new Date(t);return DOW[d.getDay()]+' '+d.getDate()+' '+MON[d.getMonth()]};
+const fDay=t=>{const n=daysTo(t);return n===0?'Today':n===1?'Tomorrow':n===-1?'Yesterday':fDate(t)};
+const fWhen=t=>fDay(t)+', '+fTime(t);
+const fLeft=k=>{const n=left(k);return n<0?'overdue':n===0?'due today':n===1?'due tomorrow':'due in '+n+' days'};
+const nDays=k=>{const n=left(k);return n<0?'Late':n===0?'Today':n===1?'1 day':n+' days'};
+const greet=()=>{const d=new Date(),h=d.getHours();return DOWS[d.getDay()]+' '+(h<5?'night':h<12?'morning':h<17?'afternoon':h<21?'evening':'night')};
+const toLocal=t=>{const d=new Date(t),p=n=>String(n).padStart(2,'0');return d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate())+'T'+p(d.getHours())+':'+p(d.getMinutes())};
+const dayKey=t=>{const d=new Date(t);return d.getFullYear()+'-'+(d.getMonth()+1)+'-'+d.getDate()};
+function streak(){const set=new Set(S.log.map(l=>l.d));let t=today0(),n=0;if(!set.has(dayKey(t)))t=addDays(t,-1);while(set.has(dayKey(t))){n++;t=addDays(t,-1)}return n}
+const lvl=()=>1+Math.floor(S.xp/100);
+const weekMin=()=>S.log.filter(l=>l.t>Date.now()-7*DAY).reduce((a,l)=>a+l.min,0);
+
+// ---------- Scheduler: puts steps into real free evenings before the deadline ----------
+function autoSchedule(k,steps){
+  const due=dueAt(k),n=steps.length,nowT=Date.now();
+  const slot=day=>{const x=new Date(day),w=x.getDay();x.setHours(w===0||w===6?11:19,0,0,0);return x.getTime()};
+  let start=today0();if(slot(start)<nowT+20*60e3)start=addDays(start,1);
+  const safety=daysTo(due)>=3?1:0;const end=addDays(mid(due),-1-safety);
+  const days=[];for(let d=start;d<=end;d=addDays(d,1))days.push(d);
+  let soon=null;if(!days.length){const r=Math.ceil((nowT+15*60e3)/(5*60e3))*5*60e3;soon=r}
+  const per=Math.max(1,Math.ceil(n/Math.max(1,days.length))),groups=Math.ceil(n/per),gap=days.length/groups;
+  const out=[];let cur=null,curDay=-1;
+  steps.forEach((s,i)=>{const g=Math.floor(i/per),di=Math.min(days.length-1,Math.floor(g*gap));
+    if(soon){cur=cur?cur:soon}else if(di!==curDay){curDay=di;cur=slot(days[di])}
+    out.push({t:s[0],m:s[1],at:cur,done:false});cur=cur+(s[1]+10)*60e3});
+  return out;
+}
+const safetyDay=k=>daysTo(dueAt(k))>=3?addDays(mid(dueAt(k)),-1):null;
+function questsFor(k){const a=ASG[k];return a.quests.map((q,i)=>S.tiny[k+i]?[q[0]+' (10-min version)',10]:[q[0],q[1]])}
+function buildDraft(k,src){
+  if(src==='own'){const own=(S.own[k]||[]).filter(x=>x[0].trim());const auto=autoSchedule(k,own.map(x=>[x[0].trim(),x[1]]));S.draft[k]=auto.map((s,i)=>own[i][2]?{...s,at:own[i][2]}:s)}
+  else S.draft[k]=autoSchedule(k,questsFor(k));
+  S.draft[k].sort((a,b)=>a.at-b.at);
+}
+const nextStep=k=>{const sc=S.sched[k]||[];const i=sc.findIndex(s=>!s.done);return i<0?null:{k,i,s:sc[i]}};
+function upNext(list){let best=null;list.forEach(k=>{if(!S.planned[k]||S.submitted[k])return;const n=nextStep(k);if(n&&(!best||n.s.at<best.s.at))best=n});return best}
+
+// ---------- Views ----------
+const V={};
+// ===== Alex: onboarding =====
+V.welcome=()=>({tone:'violet',html:`
+ <div class="row" style="justify-content:space-between"><span style="font-family:var(--display);font-weight:800;font-size:22px">HeadStart</span><span class="chip" style="background:rgba(255,255,255,.16);color:#fff">Prototype</span></div>
+ <div class="row" style="align-items:flex-end;min-height:230px;gap:8px">
+  ${buddy('#FFC53D',110,{id:'talker',cls:'bob talking',arm:true,mood:'talk'})}
+  <div id="talk" class="grow" style="position:relative;height:200px" aria-live="polite"></div>
+ </div>
+ <h1 class="h1">Starting is the hard part. We'll do it with you.</h1>
+ <p class="lead">Your assignments, tiny steps and no-scroll focus time, all in one place.</p>
+ <div class="bottom">
+  <button class="btn light" data-go="connect">${I('school',22)} Continue with school account</button>
+  <button class="btn" style="background:transparent;border:2px solid #8F79FF" data-go="g-signin">No school account? Use Google</button>
+ </div>`,enter:startTalk});
+function startTalk(){
+  const lines=["Hey! I'm Mochi.","That assignment you keep not starting?","Yeah. Every student ever.","Let's do the first 10 minutes together."];
+  const box=document.getElementById('talk'),b=document.getElementById('talker');
+  const setMouth=t=>{if(!b)return;const m=b.querySelector('.mouth-talk,path:last-child');};
+  const typing=()=>{box.innerHTML=`<div class="glass" style="position:absolute;left:0;bottom:30px;display:flex;gap:5px;padding:14px 16px;animation:rise .3s ease-out both"><span style="width:7px;height:7px;border-radius:4px;background:#fff;animation:dot 1s infinite"></span><span style="width:7px;height:7px;border-radius:4px;background:#fff;animation:dot 1s .15s infinite"></span><span style="width:7px;height:7px;border-radius:4px;background:#fff;animation:dot 1s .3s infinite"></span></div>`;b&&b.classList.add('talking')};
+  const say=i=>{typing();later(()=>{b&&b.classList.remove('talking');const lastOne=i===lines.length-1,dur=1400+lines[i].length*45;
+    box.innerHTML=`<div class="glass" style="position:absolute;left:0;bottom:30px;animation:${lastOne?'rise .6s cubic-bezier(.2,1,.3,1) both':`speak ${dur}ms ease-in-out both`}">${lines[i]}</div>`+(lastOne?`<button data-act="replay" style="position:absolute;left:0;bottom:-8px;height:32px;padding:0 12px;border-radius:10px;border:1px solid rgba(255,255,255,.45);background:rgba(255,255,255,.12);color:#fff;font-size:13px;font-weight:600;animation:rise .4s ease-out both">Say it again</button>`:'');
+    if(!lastOne) later(()=>say(i+1),dur)},650)};
+  ACT.replay=()=>{timers.forEach(t=>{clearTimeout(t)});timers=[];say(0);return false};
+  say(0);
+}
+V.connect=()=>({tone:'light',html:`
+ <div class="row" style="justify-content:space-between">${back()}<div class="dots"><span class="on"></span><span></span><span></span><span></span></div><span style="width:44px"></span></div>
+ <h1 class="h1">Link Teams once. Never type a due date again.</h1>
+ <div class="card stack"><span class="label" style="color:var(--mint-ink)">We'll see</span>
+  ${['Your classes','Assignments, briefs and rubrics','Due dates'].map(t=>`<div class="row" style="color:var(--mint-ink)">${I('check',22,2.5)}<span style="color:var(--ink)">${t}</span></div>`).join('')}</div>
+ <div class="card stack"><span class="label" style="color:var(--coral-ink)">We won't touch</span>
+  ${['Your grades or messages','Anything you hand in'].map(t=>`<div class="row" style="color:var(--coral-ink)">${I('close',22,2.5)}<span style="color:var(--ink)">${t}</span></div>`).join('')}</div>
+ <div class="bottom"><button class="btn" data-act="signIn" data-arg="alex">Connect Teams</button><button class="btn ghost" data-go="g-signin">Use Google instead</button></div>`});
+V.found=()=>({tone:'light',html:`
+ <div class="row" style="justify-content:space-between">${back()}<div class="dots"><span></span><span class="on"></span><span></span><span></span></div><span style="width:44px"></span></div>
+ <div class="stack-s"><h1 class="h1">Found 5 assignments in 4 classes</h1><p class="lead">Closest one is ${fLeft(ALEX_LIST.slice().sort((x,y)=>dueAt(x)-dueAt(y))[0])}. Nothing on fire. Nice.</p></div>
+ <div class="stack-s">${ALEX_LIST.map((k,i)=>{const a=ASG[k];return `<div class="card row pop" style="padding:14px 16px;animation-delay:${i*.06}s"><span style="width:10px;height:38px;border-radius:5px;background:${a.color};flex:none"></span><div class="grow"><div style="font-weight:700">${a.title}</div><div style="font-size:14px;color:var(--muted)">${a.cls}</div></div><span class="chip ${left(k)<=3?'coral':left(k)<=5?'sun':'violet'}">${nDays(k)}</span></div>`}).join('')}</div>
+ <div class="bottom"><button class="btn" data-go="buddy">Nice, keep going</button></div>`});
+V.buddy=()=>({tone:'light',html:`
+ <div class="row" style="justify-content:space-between">${back()}<div class="dots"><span></span><span></span><span class="on"></span><span></span></div><span style="width:44px"></span></div>
+ <div class="stack-s"><h1 class="h1">Meet your study buddy</h1><p class="lead">It studies when you study. Finish quests to dress it up.</p></div>
+ <div class="card" style="display:flex;justify-content:center;padding:26px">${buddy(S.buddy,160,{glasses:S.glasses,cls:'bob',arm:true})}</div>
+ <label class="stack-s"><span class="label">Name it</span><input id="buddy-name" data-bname="1" maxlength="14" value="${S.buddyName.replace(/"/g,'&quot;')}" style="height:52px;border-radius:16px;border:2px solid var(--line);padding:0 16px;font-weight:600;font-size:18px;background:var(--card)"></label>
+ <div class="stack-s"><span class="label">Color</span><div class="row">${[['Sun','#FFC53D'],['Mint','#5FD4A0'],['Sky','#7CB8FF'],['Peach','#FF9E7A'],['Lilac','#B9A6FF']].map(([n,c])=>`<button aria-label="${n}" data-act="color" data-arg="${c}" style="width:48px;height:48px;border-radius:16px;background:${c};border:3px solid ${S.buddy===c?'var(--ink)':'transparent'}"></button>`).join('')}</div></div>
+ <div class="row wrap"><button class="opt ${S.glasses?'on':''}" style="padding:0 16px;min-height:44px" data-act="glasses">Nerd glasses</button><span class="chip" style="min-height:44px">${I('lock',16)} Headphones</span></div>
+ <div class="bottom"><button class="btn" data-go="pause">That's my buddy</button></div>`});
+V.pause=()=>{const list=[['TikTok','#1B1530'],['Instagram','#C13584'],['YouTube','#D62B2B'],['Games','#2F7D4F'],['X','#3A3A3A'],['Netflix','#A3121B'],['Discord','#5865F2'],['Twitch','#7A3FE0'],['Facebook','#1A5FD0']];const n=Object.values(S.apps).filter(Boolean).length;
+ return{tone:'light',html:`
+ <div class="row" style="justify-content:space-between">${back()}<div class="dots"><span></span><span></span><span></span><span class="on"></span></div><span style="width:44px"></span></div>
+ <div class="stack-s"><h1 class="h1">Which apps steal your study time?</h1><p class="lead">We pause them only during focus time. Be honest, nobody's watching.</p></div>
+ <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px">${list.map(([a,c])=>`<button class="card" data-act="app" data-arg="${a}" aria-pressed="${!!S.apps[a]}" style="padding:14px 6px;display:flex;flex-direction:column;align-items:center;gap:8px;border:3px solid ${S.apps[a]?'var(--violet)':'transparent'}"><span style="width:44px;height:44px;border-radius:14px;background:${c};color:#fff;font-weight:800;font-size:18px;display:flex;align-items:center;justify-content:center">${a[0]}</span><span style="font-size:14px;font-weight:700">${a}</span></button>`).join('')}</div>
+ <div class="chip sun" style="padding:12px 14px;font-size:15px;font-weight:500;border-radius:16px">Need one for real? You always get a 5-minute pass. No lectures.</div>
+ <div class="bottom"><button class="btn" data-go="reveal">Pause ${n} apps · Let's go</button></div>`}};
+V.reveal=()=>({tone:'violet',html:`
+ <div class="stack" style="align-items:center;text-align:center">${buddy(S.buddy,96,{glasses:S.glasses,cls:'bob',mood:'wide'})}<h1 class="h1">Here's your semester</h1></div>
+ <div class="stack-s">${ALEX_LIST.map((k,i)=>{const a=ASG[k];return `<div class="card row pop" style="color:var(--dark-ink);background:#fff;padding:14px 16px;animation-delay:${.3+i*.35}s"><span style="width:10px;height:36px;border-radius:5px;background:${a.color};flex:none"></span><div class="grow"><div style="font-weight:700">${a.title}</div><div style="font-size:13px;color:#5D5875">${a.cls}</div></div><span style="font-size:13px;font-weight:800;color:#3D22C9">${nDays(k)}</span></div>`}).join('')}</div>
+ <p class="lead" style="text-align:center;animation:rise .5s 2.2s ease-out both">Take a look. Nothing to do yet.</p>
+ <div class="bottom" style="animation:rise .5s 2.4s ease-out both"><button class="btn light" data-act="skipReveal">Next: pick one to plan</button><button class="btn ghost" style="color:#fff" data-go="home">Skip, take me home</button></div>`});
+V.pick=()=>{const tips=['Biggest one, and due soon. Planning it now = calm week.','Closest deadline, but small. A few quests will do.','Still far. Fine to plan later or set a reminder.','Long one. Starting early makes it lighter.','Group work. Plan it together so everyone knows their part.'];
+ return{tone:'light',html:`
+ ${back()}
+ <div class="stack-s"><h1 class="h1">Which one do you want to plan first?</h1><p class="lead">Just one. The rest wait on Home as "not planned yet".</p></div>
+ <div class="stack-s">${ALEX_LIST.map((k,i)=>{const a=ASG[k],on=S.pick===i;return `<button class="card row" data-act="pick" data-arg="${i}" aria-pressed="${on}" style="padding:12px 14px;text-align:left;border:2px solid ${on?'var(--violet)':'transparent'}"><span style="width:24px;height:24px;border-radius:12px;border:2px solid ${on?'var(--violet)':'var(--line)'};background:${on?'var(--violet)':'transparent'};flex:none"></span><span class="grow"><span style="display:block;font-weight:700">${a.title}</span><span style="font-size:13px;color:var(--muted)">${a.cls} · ${fLeft(k)}</span>${on?`<span style="display:block;margin-top:6px;font-size:13px;line-height:1.35;color:var(--violet-ink)">${tips[i]}</span>`:''}</span>${i===0?'<span class="chip sun">TIP</span>':''}</button>`}).join('')}</div>
+ <div class="bottom"><button class="btn" data-act="planPick">Plan ${ASG[ALEX_LIST[S.pick]].title}</button><button class="btn ghost" data-go="home">Later, take me home</button></div>`}};
+
+// ===== Alex: app =====
+V.home=()=>{const planned=ALEX_LIST.filter(k=>S.planned[k]&&!S.submitted[k]),open=ALEX_LIST.filter(k=>!S.planned[k]&&!S.submitted[k]),doneList=ALEX_LIST.filter(k=>S.submitted[k]);const nx=upNext(ALEX_LIST),sk=streak();
+ const late=nx&&nx.s.at<Date.now()-30*60e3;
+ const nextCard=nx?`<button class="card row" data-act="startStep" data-arg="${nx.k}:${nx.i}" style="background:var(--violet);color:#fff;text-align:left;padding:18px">
+   <span class="grow stack-s"><span style="font-size:13px;font-weight:800;color:${late?'#FFB0A6':'var(--sun)'}">${late?'MISSED · WAS '+fWhen(nx.s.at).toUpperCase():'UP NEXT · '+fWhen(nx.s.at).toUpperCase()}</span><span style="font-family:var(--display);font-weight:800;font-size:22px;line-height:1.1">${nx.s.t}</span><span style="font-size:14px;color:#E4DEFF">${ASG[nx.k].title} · ${nx.s.m} min · tap to start now</span></span>
+   <span style="width:52px;height:52px;border-radius:18px;background:#fff;color:var(--violet);display:flex;align-items:center;justify-content:center;flex:none">${I('play',18)}</span></button>`
+  :planned.length?`<div class="card stack" style="background:var(--mint);color:#1B1530"><span style="font-size:13px;font-weight:800">ALL QUESTS DONE</span><span style="font-family:var(--display);font-weight:800;font-size:22px;line-height:1.1">Do the final check and hand it in.</span><button class="btn dark sm" data-act="openCheck" data-arg="${planned[0]}" style="align-self:flex-start">Final check</button></div>`
+  :`<div class="card stack" style="background:var(--violet);color:#fff"><span style="font-size:13px;font-weight:800;color:var(--sun)">NOTHING PLANNED YET</span><span style="font-family:var(--display);font-weight:800;font-size:22px;line-height:1.1">Pick one assignment and we'll break it down.</span><button class="btn light sm" data-go="pick" style="align-self:flex-start">Choose one</button></div>`;
+ const plannedHtml=planned.map(k=>{const a=ASG[k],sc=S.sched[k]||[],d=sc.filter(x=>x.done).length,n=nextStep(k);return `<button class="card stack-s" data-act="openPlan" data-arg="${k}" style="text-align:left"><div class="row" style="justify-content:space-between"><span style="font-weight:700">${a.title}</span><span class="chip ${left(k)<=2?'coral':'sun'}">${nDays(k).toUpperCase()}</span></div><div style="display:grid;grid-template-columns:repeat(${Math.max(1,sc.length)},minmax(0,1fr));gap:4px">${sc.map(x=>`<span style="height:8px;border-radius:4px;background:${x.done?'#12A26E':'var(--line)'}"></span>`).join('')}</div><span style="font-size:13px;color:var(--muted)">${d} of ${sc.length} quests${n?' · next '+fWhen(n.s.at):' · ready for final check'}</span></button>`}).join('')||'<p class="lead" style="font-size:14px">Nothing yet.</p>';
+ const openHtml=open.map(k=>{const a=ASG[k],r=S.remind[k];return `<div class="dash row"><span style="width:8px;height:32px;border-radius:4px;background:${a.color};flex:none"></span><div class="grow"><div style="font-weight:700;font-size:15px">${a.title}</div><div style="font-size:12px;color:var(--muted)">${r?'Reminders on · '+fLeft(k):a.cls+' · '+fLeft(k)}</div></div><button class="icon-btn" data-act="bell" data-arg="${k}" aria-label="Remind me" aria-pressed="${!!r}" style="background:${r?'var(--sun)':'var(--card)'};color:${r?'var(--dark-ink)':'var(--ink)'}">${I('bell',18)}</button><button class="btn dark sm" data-act="openAssign" data-arg="${k}">Plan</button></div>`}).join('');
+ return{app:'alex',tab:'home',html:`
+ <div class="row"><button class="icon-btn" data-go="me" aria-label="Me">${buddy(S.buddy,36,{glasses:S.glasses})}</button><div class="grow"><div style="font-size:13px;color:var(--muted)" data-clock="greet">${greet()} · ${fDate(Date.now())}</div><h1 class="h2">Hey Alex</h1></div><span class="chip" style="background:var(--card);color:${sk?'#E07A00':'var(--muted)'};font-size:15px" aria-label="${sk} day streak">${I('flame',18)}<span style="color:var(--ink)">${sk}</span></span></div>
+ ${S.welcomeBack?`<div class="chip mint" style="padding:12px 14px;font-size:15px;border-radius:16px">Welcome back! Everything is where you left it.</div>`:''}<div class="cols"><div class="stack">${nextCard}<div class="row" style="justify-content:space-between"><span class="label">Planned</span><span style="font-size:13px;color:var(--muted)">${planned.length}</span></div>${plannedHtml}</div>
+ <div class="stack"><div class="row" style="justify-content:space-between"><span class="label">Not planned yet</span><span style="font-size:13px;color:var(--muted)">${open.length}</span></div>${openHtml||'<p class="lead">All planned. Look at you.</p>'}
+ ${doneList.length?`<span class="label" style="margin-top:6px">Handed in</span>${doneList.map(k=>`<div class="card row" style="padding:12px 14px">${I('check',20,2.6)}<span class="grow" style="font-weight:700">${ASG[k].title}</span><span style="font-size:13px;color:var(--muted)">${fDay(S.submitted[k])}</span></div>`).join('')}`:''}</div></div>`}};
+V.assignment=()=>{const a=A(),labels=[['2h','~2h'],['4h','~4h'],['6h','6h+'],['?','No idea']];const blocks={'2h':'Short 15-min blocks so it never feels heavy.','4h':'25-min blocks for small stuff, 45-min for the big parts.','6h':'25-min and 50-min blocks, spread over more days.','?':"We'll guess from your past work and adjust after each quest."};
+ return{app:isPloy()?'ploy':'alex',tab:'home',html:`
+ <div class="row">${back()}<div class="grow"><div class="label">${a.cls} · due ${fWhen(dueAt(S.assign))}</div><h1 class="h2">${a.title}</h1></div></div>
+ <div class="cols"><div class="card stack"><div class="row" style="justify-content:space-between"><span class="label" style="color:var(--violet-ink)">The brief in 20 seconds</span><span style="font-size:13px;color:var(--muted)">${isPloy()?'you added':'from Teams'}</span></div>
+  ${a.brief.map(([v,r])=>`<p style="line-height:1.4"><b>${v}</b> ${r}</p>`).join('')}<div class="row wrap" style="gap:6px">${a.rubric.map(r=>`<span class="chip">${r}</span>`).join('')}</div></div>
+ <div class="stack"><h2 class="h2">How do you want to do this one?</h2>
+  ${[['suggest','Suggest steps for me','Small steps built from the brief and rubric.'],['own','I\'ll write my own steps','You list them, we put them in your week.'],['remind','Just remind me until the deadline','No steps at all. Only pings.']].map(([k,t,d])=>{const on=S.how===k;return `<button class="card row" data-act="how" data-arg="${k}" aria-pressed="${on}" style="text-align:left;padding:14px 16px;border:2px solid ${on?'var(--violet)':'var(--line)'}"><span style="width:24px;height:24px;border-radius:12px;border:2px solid ${on?'var(--violet)':'var(--line)'};background:${on?'var(--violet)':'transparent'};box-shadow:inset 0 0 0 4px var(--card);flex:none"></span><span class="grow"><b style="display:block">${t}</b><span style="font-size:14px;color:var(--muted)">${d}</span></span></button>`}).join('')}
+  ${S.how==='suggest'?`<span class="label" style="margin-top:6px">How long do you think it'll take?</span>
+  <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px">${labels.map(([k,l])=>`<button class="opt ${S.timePick===k?'on':''}" data-act="time" data-arg="${k}">${l}</button>`).join('')}</div>
+  <div class="card row" style="background:var(--violet-soft);align-items:flex-start">${myBuddy(42)}<div class="stack-s"><b>${a.quests.length} quests · ${fLeft(S.assign)}</b><span style="font-size:15px;line-height:1.4;color:var(--muted)">${blocks[S.timePick]} We put them in your free evenings, with safety time before the deadline.</span></div></div>`:''}
+  <div class="cta-bar"><button class="btn" data-go="${S.how==='suggest'?'quests':S.how==='own'?'mysteps':'remind'}">${S.how==='suggest'?'Show my suggested steps':S.how==='own'?'Write my steps':'Set my reminders'}</button></div></div></div>`}};
+const esc=s=>String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/"/g,'&quot;');
+const fmtMin=m=>m<60?m+'m':Math.floor(m/60)+'h '+(m%60)+'m';
+const appOf=()=>isPloy()?'ploy':'alex';
+const logoutRow=()=>`<button class="row" data-act="logoutAsk" style="justify-content:space-between;padding:16px;width:100%;border-top:1px solid var(--line)"><b>Log out</b><span style="color:var(--muted)">${I('back',18)}</span></button>`;
+const logoutSheet=()=>S.logoutSheet?`<div class="scrim" data-act="logoutCancel"><div class="sheet" style="text-align:center;align-items:center">${myBuddy(72,{mood:'flat',cls:'bob'})}<h2 class="h2">Log out of HeadStart?</h2><p class="lead">Your plans, streak and stickers stay saved. Sign in with ${isPloy()?'Google':'Teams'} again to pick up where you left off.</p><button class="btn" style="background:var(--coral)" data-act="logout">Log out</button><button class="btn line" data-act="logoutCancel">Stay signed in</button></div></div>`:'';
+V.mysteps=()=>{const k=S.assign,a=A(),due=dueAt(k),own=S.own[k]||(S.own[k]=[['',25,null],['',25,null],['',45,null]]);
+ return{app:appOf(),tab:'home',html:`
+ <div class="row">${back()}<div class="grow"><div class="label">${a.title}</div><h1 class="h2">Your own steps</h1></div></div>
+ <div class="narrow stack"><p class="lead">Write them, pick how long, and choose a day if you like. No day? We'll find a free evening before ${fWhen(due)}.</p>
+ ${own.map(([t,m,at],i)=>`<div class="card stack-s" style="padding:14px"><div class="row"><span class="clock" style="font-size:20px;width:24px">${i+1}</span><input id="own-${i}" data-own="${i}" value="${esc(t)}" placeholder="${['e.g. Read the brief','e.g. Find sources','e.g. Write the draft','e.g. Check and submit'][i%4]}" class="grow" style="height:46px;border-radius:12px;border:2px solid var(--line);padding:0 12px;background:var(--bg);font-weight:600;min-width:0"><button class="icon-btn" style="background:var(--soft)" data-act="ownDel" data-arg="${i}" aria-label="Remove step ${i+1}">${I('close',18)}</button></div>
+  <div class="row" style="gap:6px;padding-left:36px">${[10,25,45,60].map(n=>`<button class="opt ${m===n?'on':''}" style="min-height:38px;padding:0 10px;font-size:13px;border-radius:10px" data-act="ownMin" data-arg="${i}:${n}">${n} min</button>`).join('')}</div>
+  <div class="row wrap" style="gap:8px;padding-left:36px"><label class="pick chip ${at?'violet':''}" style="min-height:40px;padding:0 12px;border-radius:12px;font-size:14px;${at?'':'background:var(--soft)'}">${I('cal',16)} ${at?fWhen(at):'Pick day + time'}<input type="datetime-local" data-ownat="${i}" value="${at?toLocal(at):''}" min="${toLocal(Date.now())}" max="${toLocal(due)}" aria-label="When to do step ${i+1}"></label>${at?`<button class="btn ghost sm" style="min-height:40px;padding:0 8px" data-act="ownAuto" data-arg="${i}">Let us pick</button>`:`<span style="font-size:13px;color:var(--muted)">or we pick</span>`}</div></div>`).join('')}
+ <button class="btn line" data-act="ownAdd">${I('plus',18)} Add a step</button>
+ <div class="cta-bar"><button class="btn" data-act="ownPlan">See my plan</button></div>
+ <button class="btn ghost" data-go="quests">Need ideas? See suggested steps</button></div>`}};
+V.quests=()=>{const a=A();const qs=a.quests.map((q,i)=>S.tiny[S.assign+i]?[q[0]+' (10-min version)',10,q[2],'Smaller is fine. A tiny start still counts.',q[4]]:q);const s=Math.min(S.qsel,qs.length-1),c=qs[s];const off=[0,110,180,110,20,100,180];
+ return{app:appOf(),tab:'home',html:`
+ <div class="row">${back()}<div class="grow"><div class="label">${a.title}</div><h1 class="h2">Your quest map</h1></div></div>
+ <div class="cols"><div class="qmap"><p style="font-size:14px;color:var(--night-ink);margin-bottom:8px">Built from your brief + rubric. Tap a quest to see why.</p>
+  ${qs.map((q,i)=>`<div class="qnode ${i===s?'sel':''}" style="margin-left:min(${off[i%7]}px,30%)"><button data-act="qsel" data-arg="${i}" aria-label="Quest ${i+1}: ${esc(q[0])}">${i+1}</button><span>${q[0]}</span></div>`).join('')}</div>
+ <div class="card stack"><div class="row" style="justify-content:space-between"><span class="label" style="color:var(--violet-ink)">Quest ${s+1} · ${c[1]} min</span><span style="font-size:13px;font-weight:700;color:var(--muted)">${c[4]?'Who: '+c[4]:'+'+Math.max(10,Math.round(c[1]*.9))+' XP'}</span></div>
+  <h2 class="h2">${c[0]}</h2><div class="stack-s" style="background:var(--soft);border-radius:16px;padding:12px 14px"><span class="chip" style="align-self:flex-start;background:var(--ink);color:var(--bg)">${c[2]}</span><p style="line-height:1.4">${c[3]}</p></div>
+  <button class="btn line sm" style="width:100%" data-act="shrink" data-arg="${s}">${S.tiny[S.assign+s]?'Back to full size':'Make this step smaller'}</button></div></div>
+ <div class="cta-bar"><button class="btn" data-act="planSuggest">Looks good, put it in my week</button></div>`}};
+V.plan=()=>{const k=S.assign,a=A();if(!S.draft[k])buildDraft(k,S.useOwn[k]?'own':'suggest');const st=S.draft[k],due=dueAt(k),sd=safetyDay(k),nowT=Date.now();
+ const rows=st.map((x,i)=>({kind:x.done?'done':'q',i,at:x.at,t:x.t,meta:x.done?'Done · '+x.m+' min':(x.at<nowT-30*60e3?'Missed · ':'')+fTime(x.at)+' · '+x.m+' min'}));
+ if(sd&&!st.some(x=>mid(x.at)===sd))rows.push({kind:'safe',at:sd+19*36e5,t:'Safety time, free if all done',meta:'Buffer for surprises'});
+ rows.push({kind:'due',at:due,t:'Due · hand it in',meta:fWhen(due)});rows.sort((x,y)=>x.at-y.at);
+ const badge=r=>{const d=new Date(r.at),n=daysTo(r.at),hot=r.kind==='due'||r.kind==='done'||(n===0&&r.kind==='q');const bg=r.kind==='due'?'var(--coral)':r.kind==='done'?'#12A26E':n===0&&r.kind==='q'?'var(--violet)':'var(--card)';
+  const inner=`<span style="font-size:11px;font-weight:800;letter-spacing:.04em">${n===0?'TODAY':n===1?'TMRW':DOW[d.getDay()].toUpperCase()}</span><span style="font-size:19px;font-weight:800;line-height:1.1" class="tnum">${d.getDate()}</span><span style="font-size:10px;font-weight:700;opacity:.8">${MON[d.getMonth()].toUpperCase()}</span>`;
+  const sty=`width:58px;flex:none;border-radius:14px;background:${bg};color:${hot?'#fff':'var(--ink)'};display:flex;flex-direction:column;align-items:center;justify-content:center;padding:6px 0`;
+  return r.kind==='q'?`<label class="pick" style="${sty}">${inner}<input type="datetime-local" data-at="${r.i}" value="${toLocal(r.at)}" max="${toLocal(due)}" aria-label="Move ${esc(r.t)}"></label>`:`<div style="${sty}">${inner}</div>`};
+ return{app:appOf(),tab:'home',html:`
+ <div class="row">${back()}<div class="grow"><div class="label">${a.title}</div><h1 class="h2">${S.planned[k]?'Your plan':"Here's your plan"}</h1></div></div>
+ <p class="lead">${a.group?'Everyone sees this plan. Each person gets their own reminders.':'Real dates in your free evenings. Tap a date to move a quest.'}</p>
+ <div class="cols"><div class="stack-s">${rows.map(r=>`<div class="row" style="align-items:stretch">${badge(r)}<div class="grow" style="border-radius:14px;padding:10px 14px;background:${r.kind==='safe'?'var(--sun-soft)':'var(--card)'};border:2px ${r.kind==='safe'?'dashed #E0A100':'solid transparent'};${r.kind==='done'?'opacity:.7':''}"><div style="font-weight:700;font-size:15px;${r.kind==='done'?'text-decoration:line-through':''}">${esc(r.t)}</div><div style="font-size:13px;color:${r.meta.startsWith('Missed')?'var(--coral-ink)':'var(--muted)'}">${r.meta}</div></div></div>`).join('')}</div>
+ <div class="stack"><button class="card row" data-act="cal" aria-pressed="${S.cal}" style="text-align:left">${I('cal',24)}<span class="grow" style="font-weight:700">Add to ${isPloy()?"Google":"Outlook"} Calendar</span><span class="toggle ${S.cal?'on':''}"><span></span></span></button>
+  <div class="cta-bar"><button class="btn" data-act="lockIn">${S.planned[k]?'Save changes':'Lock it in'}</button></div>${S.planned[k]?`<button class="btn ghost" data-act="replan">Start this plan over</button>`:''}</div></div>`}};
+V.remind=()=>{const k=S.assign,a=A(),due=dueAt(k);const at=d=>{const x=new Date(addDays(mid(due),-d));x.setHours(19,0,0,0);return x.getTime()};
+ const list=[['a','A week before',at(7)],['b','3 days before',at(3)],['c','The day before',at(1)],['d','3 hours before',due-3*36e5]].map(([key,l,t])=>[key,l,t,t>Date.now()]);
+ return{app:appOf(),tab:'home',html:`
+ <div class="row">${back()}<span class="label">${a.title} · ${fLeft(k)}</span></div>
+ <div class="narrow stack"><div class="stack-s"><h1 class="h1">No quests. Just a heads-up.</h1><p class="lead">You do it your way. We'll make sure ${fWhen(due)} doesn't sneak up on you.</p></div>
+ <span class="label">Ping me</span>
+ ${list.map(([key,l,t,ok])=>{const on=ok&&S.remindOpts[key];return `<button class="card row" data-act="ropt" data-arg="${key}" aria-pressed="${!!on}" ${ok?'':'disabled'} style="padding:14px 16px;text-align:left;border:2px solid ${on?'var(--violet)':'var(--line)'};opacity:${ok?1:.45}"><span style="width:26px;height:26px;border-radius:8px;background:${on?'var(--violet)':'var(--line)'};color:#fff;display:flex;align-items:center;justify-content:center;flex:none">${I('check',16,3)}</span><span class="grow" style="font-weight:600">${l}</span><span style="font-size:13px;color:var(--muted);text-align:right">${ok?fWhen(t):'already passed'}</span></button>`}).join('')}
+ <span class="label">Looks like this</span>
+ <div class="card row" style="box-shadow:0 6px 20px rgba(27,21,48,.08)">${myBuddy(40)}<div><div style="font-weight:700">${a.title}: ${fLeft(k)}</div><div style="font-size:14px;color:var(--muted)">Want quests after all? Tap.</div></div></div>
+ <div class="cta-bar"><button class="btn" data-act="remindDone">Done</button></div><button class="btn ghost" data-go="quests">Actually, make me quests</button></div>`}};
+V.nudge=()=>{const k=S.assign,n=nextStep(k);if(!n)return V.home();const a=A(),sc=S.sched[k],t=n.s.at-2*60e3,d=new Date(t),sk=streak();
+ return{tone:'night',html:`
+ <div class="row" style="justify-content:center"><span class="chip" style="background:var(--night-2);color:#BDB4E6">Preview · how we'll ping you</span></div>
+ <div class="stack" style="align-items:center;gap:2px"><span style="color:var(--night-ink)">${DOWS[d.getDay()]} ${d.getDate()} ${MON[d.getMonth()]}</span><span class="clock tnum" style="font-size:92px;font-weight:600">${d.getHours()%12||12}:${String(d.getMinutes()).padStart(2,'0')}</span></div>
+ <div class="row" style="justify-content:center"><span class="chip" style="background:var(--night-2);color:#fff"><span style="width:8px;height:8px;border-radius:4px;background:${a.color}"></span>${a.title.split(' ')[0]} · ${nDays(k)}</span><span class="chip" style="background:var(--night-2);color:var(--sun)">${I('flame',14)}<span style="color:#fff">${sk} day${sk===1?'':'s'}</span></span></div>
+ <div class="bottom" style="background:#0F0B1E;border-radius:30px;padding:18px;gap:16px;animation:rise .6s ease-out both">
+  <div class="row">${buddy(S.buddy,56,{glasses:S.glasses}).replace('<svg','<svg style="animation:wiggle 1.2s ease-in-out infinite"')}<div class="grow"><div style="font-size:13px;font-weight:800;color:#BDB4E6">QUEST ${n.i+1}/${sc.length} · ${fTime(n.s.at).toUpperCase()}</div><div style="font-family:var(--display);font-weight:800;font-size:19px;line-height:1.15">${esc(n.s.t)}</div></div>
+   <div class="ring" style="width:64px;height:64px;background:conic-gradient(var(--sun) 0 ${S.snooze?30:92}%,var(--night-2) 0)"><div class="ring" style="width:52px;height:52px;background:#0F0B1E;flex-direction:column"><span class="clock" style="font-size:20px">${S.snooze?17:2}</span><span style="font-size:10px;color:#BDB4E6">min</span></div></div></div>
+  <div style="display:grid;grid-template-columns:repeat(${sc.length},minmax(0,1fr));gap:4px">${sc.map((q,i)=>`<span style="height:6px;border-radius:3px;background:${q.done?'#12A26E':i===n.i?'var(--sun)':'var(--night-2)'}"></span>`).join('')}</div>
+  <div style="display:grid;grid-template-columns:2fr 1fr 1fr;gap:8px"><button class="btn sun" data-act="startStep" data-arg="${k}:${n.i}">Go</button><button class="btn" style="background:var(--night-2)" data-act="snooze">${S.snooze?fTime(n.s.at+15*60e3).replace(' pm','').replace(' am',''):'+15'}</button><button class="btn" style="background:var(--night-2)" data-act="skipStep">Skip</button></div>
+ </div>
+ <button class="btn ghost" style="color:var(--night-ink)" data-go="home">Got it, back home</button>`}};
+// ----- Focus engine (real clock): focus block -> alarm pop-up -> break -> alarm -> next block. Pop-ups act by themselves after 10 s. -----
+const TM={
+ focus:{brk:5*60,tone:'violet',ring:'var(--sun)',track:'var(--violet-2)',inner:'var(--violet)',sub:'#E4DEFF',word:'Block'},
+ sprint:{brk:10*60,tone:'mint',ring:'#1B1530',track:'var(--mint-2)',inner:'var(--mint)',sub:'#1B1530',word:'Sprint'}};
+function newTimer(kind,k,i,run){let len,blocks;
+ if(kind==='sprint'){len=45*60;blocks=3}else{const m=k&&S.sched[k]&&S.sched[k][i]?S.sched[k][i].m:25;blocks=Math.max(1,Math.ceil(m/25));len=Math.round(m*60/blocks)}
+ S.t={kind,k,i,phase:'focus',block:1,blocks,len,seg:len,left:len,endAt:null,started:false,modal:null,auto:10,focusSec:0};
+ if(run)tmRun(S.t);return S.t}
+const tLeft=t=>t.endAt?Math.max(0,Math.ceil((t.endAt-Date.now())/1000)):t.left;
+function tmRun(t){t.endAt=Date.now()+t.left*1000;t.started=true}
+function tmHold(t){t.left=tLeft(t);t.endAt=null}
+let audioCtx=null;
+function alarm(){try{navigator.vibrate&&navigator.vibrate([220,120,220,120,220])}catch(e){}
+ try{audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();[0,.28,.56].forEach(d=>{const o=audioCtx.createOscillator(),g=audioCtx.createGain();o.type='sine';o.frequency.value=880;g.gain.setValueAtTime(.0001,audioCtx.currentTime+d);g.gain.exponentialRampToValueAtTime(.25,audioCtx.currentTime+d+.02);g.gain.exponentialRampToValueAtTime(.0001,audioCtx.currentTime+d+.22);o.connect(g).connect(audioCtx.destination);o.start(audioCtx.currentTime+d);o.stop(audioCtx.currentTime+d+.25)})}catch(e){}}
+function tmApply(){const t=S.t,c=TM[t.kind];
+ if(t.modal==='toBreak'){t.phase='break';t.left=c.brk}
+ else if(t.modal==='toFocus'){t.phase='focus';t.block=Math.min(t.blocks,t.block+1);t.left=t.len;t.seg=t.len}
+ t.modal=null;t.auto=10;tmRun(t);render(false)}
+function tmTick(){const t=S.t;if(!t)return;const c=TM[t.kind];
+ if(t.modal){if(t.modal==='last')return;t.auto--;const a=document.getElementById('auto'),ar=document.getElementById('autoRing');if(a)a.textContent=Math.max(0,t.auto);if(ar)ar.style.background=`conic-gradient(var(--violet) 0 ${(10-t.auto)*10}%,var(--line) 0)`;if(t.auto<=0)tmApply();return}
+ if(!t.endAt)return;
+ const l=tLeft(t);
+ if(l<=0){t.endAt=null;t.left=0;if(t.phase==='focus'){t.focusSec+=t.seg;t.modal=t.block>=t.blocks?'last':'toBreak'}else{t.modal='toFocus'}t.auto=10;alarm();render(false);return}
+ const tot=t.phase==='focus'?t.seg:c.brk,ring=t.phase==='focus'?c.ring:'#1B1530',track=t.phase==='focus'?c.track:'rgba(27,21,48,.14)';
+ const el=document.getElementById('clock'),r=document.getElementById('ring');if(el)el.textContent=mmss(l);if(r)r.style.background=`conic-gradient(${ring} 0 ${Math.round((tot-l)/tot*100)}%,${track} 0)`}
+function timerView(kind,top,title,extra){
+ const t=S.t,c=TM[kind],brk=t.phase==='break',tot=brk?c.brk:t.seg,l=tLeft(t),p=Math.round((tot-l)/tot*100),paused=t.started&&!t.endAt&&!t.modal;
+ const ring=brk?'#1B1530':c.ring,track=brk?'rgba(27,21,48,.14)':c.track,inner=brk?'var(--sun)':c.inner,sub=brk?'#3B3552':c.sub;
+ const steps=[];if(t.blocks>1)for(let i=1;i<=t.blocks;i++){steps.push([c.word+' '+i,t.phase==='focus'&&t.block===i?'now':(i<t.block||(brk&&i===t.block))?'done':'next']);if(i<t.blocks)steps.push([Math.round(c.brk/60)+'-min break',brk&&t.block===i?'now':i<t.block?'done':'next'])}
+ const chip=s=>s==='now'?`background:${brk?'#1B1530':'#fff'};color:${brk?'#fff':'#1B1530'}`:s==='done'?'background:rgba(255,255,255,.22);opacity:.75':'background:rgba(255,255,255,.12);opacity:.75';
+ const modal=!t.modal?'':t.modal==='last'?`<div class="scrim"><div class="sheet" style="text-align:center;align-items:center">
+   <span class="ring" style="width:72px;height:72px;background:var(--sun-soft);color:var(--sun-ink);animation:wiggle .5s ease-in-out 3">${I('bell',34)}</span>
+   <h2 class="h2">Time's up!${t.blocks>1?' Last '+c.word.toLowerCase()+' done.':''}</h2><p class="lead">Finished, or need a little more?</p>
+   <button class="btn" data-act="questDone">${kind==='focus'?'Quest done':'All sprints done'}</button><button class="btn line" data-act="tmMore" data-arg="600">10 more minutes</button></div></div>`
+  :`<div class="scrim"><div class="sheet" style="text-align:center;align-items:center">
+   <span class="ring" style="width:72px;height:72px;background:var(--sun-soft);color:var(--sun-ink);animation:wiggle .5s ease-in-out 3">${I('bell',34)}</span>
+   <h2 class="h2">${t.modal==='toBreak'?`Ding! ${c.word} ${t.block} done.`:"Break's over."}</h2>
+   <p class="lead">${t.modal==='toBreak'?`Your ${Math.round(c.brk/60)}-min break starts by itself in`:`${c.word} ${t.block+1} starts by itself in`}</p>
+   <div id="autoRing" class="ring" style="width:96px;height:96px;background:conic-gradient(var(--violet) 0 ${(10-t.auto)*10}%,var(--line) 0)"><div class="ring" style="width:80px;height:80px;background:var(--card)"><span id="auto" class="clock tnum" style="font-size:40px">${t.auto}</span></div></div>
+   ${t.modal==='toBreak'?`<button class="btn" data-act="tmGo">Start break now</button><button class="btn line" data-act="tmMore" data-arg="300">Keep going 5 more min</button><button class="btn ghost" data-act="tmSkipBreak">Skip the break</button>`
+   :`<button class="btn" data-act="tmGo">Start ${c.word.toLowerCase()} ${t.block+1} now</button><button class="btn line" data-act="tmBreakMore">2 more minutes of break</button>`}</div></div>`;
+ const plan=t.blocks>1?`${t.blocks} × ${Math.round(t.len/60)} min with ${Math.round(c.brk/60)}-min breaks`:`${Math.round(t.len/60)} min, no breaks needed`;
+ return{tone:brk?'sun':c.tone,html:`
+ <div class="row" style="justify-content:space-between"><button class="icon-btn" data-act="tmClose" aria-label="Close">${I('close')}</button><span class="chip" style="background:rgba(255,255,255,.18);color:inherit;font-size:14px">${top}</span>${kind==='focus'?`<button class="icon-btn" data-act="laptopTip" aria-label="Continue on laptop">${I('laptop',22)}</button>`:'<span style="width:44px"></span>'}</div>
+ <div class="stack-s" style="align-items:center;text-align:center"><span style="color:${sub}">${brk?'Break time. Phone down, stretch, water.':esc(title[0])}</span><h1 class="h1" style="font-size:30px">${brk?'Rest your brain':esc(title[1])}</h1></div>
+ ${steps.length&&t.started?`<div class="row wrap" style="justify-content:center;gap:6px">${steps.map(([lb,s])=>`<span class="chip" style="${chip(s)};color:${s==='now'?'':'inherit'}">${s==='done'?'✓ ':''}${lb}</span>`).join('')}</div>`:''}
+ <div style="flex:1;display:flex;align-items:center;justify-content:center;padding:4px 0"><div id="ring" class="ring" style="width:min(270px,66vw,38vh);height:min(270px,66vw,38vh);background:conic-gradient(${ring} 0 ${p}%,${track} 0);animation:${t.endAt?'breathe 4s ease-in-out infinite':'none'}"><div class="ring" style="width:87%;height:87%;background:${inner};flex-direction:column;gap:8px">${brk?buddy('#FFFFFF',48,{mood:'sleep'}):kind==='focus'?buddy(S.buddy,48,{glasses:S.glasses,mood:t.started?'flat':''}):buddy('#FFFFFF',46,{mood:'flat'})}<span id="clock" class="clock tnum" style="font-size:clamp(40px,7vh,60px)">${mmss(l)}</span><span style="font-size:14px;color:${sub}">${!t.started?'ready':paused?'paused':brk?'break':'of '+Math.round(t.seg/60)+' min'}</span></div></div></div>
+ ${t.started?extra||'':`<p style="text-align:center;font-size:14px;color:${sub}">${plan}</p>`}
+ <div class="stack-s">${!t.started?`<button class="btn ${kind==='focus'?'light':'dark'}" data-act="tmStart">${I('play',16)} Start focus</button><button class="btn ghost" style="color:inherit" data-act="tmClose">Not now</button>`
+  :`${brk?`<button class="btn dark" data-act="tmEndBreak">End break early</button>`:`<button class="btn ${kind==='focus'?'light':'dark'}" data-act="questDone">${kind==='focus'?'Quest done':'All sprints done'}</button>`}
+  <div class="row" style="justify-content:space-between"><button class="btn ghost" style="color:inherit;width:auto" data-act="pauseFocus">${paused?'Resume':'Pause'}</button><button class="btn ghost" style="color:inherit;width:auto;opacity:.8;font-size:13px" data-act="tmDemo">Demo: jump to the alarm</button></div>`}</div>
+ ${modal}`,enter:()=>every(tmTick,1000)}}
+V.focus=()=>{let t=S.t&&S.t.kind==='focus'?S.t:null;
+ if(!t){const n=upNext(isPloy()?['essay']:ALEX_LIST);if(n)t=newTimer('focus',n.k,n.i,false)}
+ if(!t)return{app:appOf(),tab:'focus',html:`
+  <h1 class="h1">Focus</h1>
+  <div class="card stack" style="align-items:center;text-align:center;padding:28px 20px">${myBuddy(96,{mood:'sleep',cls:'bob'})}<h2 class="h2">Nothing to focus on yet</h2><p class="lead">Plan an assignment and your next quest shows up here, ready to start.</p>
+  <button class="btn" data-go="${isPloy()?'g-home':'pick'}">Plan an assignment</button><button class="btn line" data-act="freeFocus">Just a 25-min focus</button></div>`};
+ const k=t.k,sc=k?S.sched[k]:null,step=sc?sc[t.i]:null;
+ const v=timerView('focus',k?'Quest '+(t.i+1)+' of '+sc.length:'Free focus',[k?ASG[k].title:'No assignment, just focus',step?step.t:'Deep work time'],
+  t.phase==='break'?'':`<button data-go="napping" style="align-self:center;font-size:14px;font-weight:700;color:#E4DEFF;min-height:44px;padding:0 12px;text-decoration:underline;text-underline-offset:3px">${Object.keys(isPloy()?S.ployApps:S.apps).filter(x=>(isPloy()?S.ployApps:S.apps)[x]).slice(0,1).join('')||'Apps'} + ${Math.max(0,Object.values(isPloy()?S.ployApps:S.apps).filter(Boolean).length-1)} apps are napping</button>`);
+ if(S.laptop)v.html+=`<div class="scrim" data-act="laptopTip"><div class="sheet"><span class="label">Same quest on your laptop</span><p style="line-height:1.45">Open HeadStart on your laptop and this timer keeps going there. Websites like YouTube nap too.</p><button class="btn" data-act="laptopTip">Got it</button></div></div>`;
+ return v};
+V.napping=()=>({tone:'night',html:`
+ <div class="stack" style="align-items:center;text-align:center;padding-top:40px">${buddy(S.buddy,150,{mood:'sleep'})}<h1 class="h1">TikTok is napping</h1><p class="lead">${S.t?Math.max(1,Math.ceil(tLeft(S.t)/60)):25} min left in this block. The videos will still be there. Promise.</p></div>
+ <div class="bottom"><button class="btn sun" data-go="focus">Back to my quest</button><button class="btn" style="background:transparent;border:2px solid var(--night-3)" data-act="pass">${S.pass?'5-min pass on. Timer is waiting.':'I really need it · use 5-min pass (1 left)'}</button></div>`});
+V.done=()=>{const L=S.last||{min:0,xp:0},k=L.k,sc=k?S.sched[k]:null,n=k?nextStep(k):null,dn=sc?sc.filter(x=>x.done).length:0,sk=streak();
+ return{tone:'sun',html:`
+ <div class="stack" style="align-items:center;text-align:center;padding-top:20px">${buddy('#FFFFFF',130,{mood:'wide',glasses:true}).replace('<svg','<svg style="animation:pop .6s cubic-bezier(.2,1.4,.4,1) both"')}<h1 class="h1">${k?'Quest '+(L.i+1)+', done!':'Focus done!'}</h1><span>${k?esc(sc[L.i].t):'Free focus'} in ${L.min} min. Past you would never.</span></div>
+ <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">${[['+'+L.xp,'XP'],[sk,'day streak'],k?[dn+'/'+sc.length,'quests']:[fmtMin(weekMin()),'this week']].map(([v,lb])=>`<div class="card" style="text-align:center;padding:14px 6px"><div class="clock" style="font-size:26px">${v}</div><div class="label">${lb}</div></div>`).join('')}</div>
+ <div class="card stack-s"><div class="row" style="justify-content:space-between;font-weight:700"><span>${L.up?'Level up! Level '+lvl():'Level '+lvl()}</span><span class="tnum">${S.xp%100} / 100 XP</span></div><div class="bar"><i style="width:${S.xp%100}%"></i></div></div>
+ <div class="card stack-s"><b>How did that feel?</b><div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">${['Easy','Okay','Tough'].map(m=>`<button class="opt ${S.mood===m?'on':''}" style="min-height:44px;${S.mood===m?'background:#1B1530;color:#fff':'background:#fff;color:#1B1530;border-color:#E4E0F5'}" data-act="mood" data-arg="${m}">${m}</button>`).join('')}</div>${S.mood?`<span style="font-size:14px;color:#3B3552">${{Easy:'Nice. Next blocks can go a little longer.',Okay:'Cool, we keep 25-min blocks.',Tough:'Got it. Next one is shorter, with a break halfway.'}[S.mood]}</span>`:''}</div>
+ <div class="bottom">${n?`<button class="btn dark" data-go="home">Back home · next ${fWhen(n.s.at)}</button>`:k?`<button class="btn dark" data-act="openCheck" data-arg="${k}">All quests done · final check</button>`:`<button class="btn dark" data-go="home">Back home</button>`}</div>`}};
+V.behind=()=>{const k=S.assign,sc=S.sched[k]||[],n=nextStep(k);
+ return{app:appOf(),tab:'home',html:`
+ <div class="row">${back()}</div>
+ <div class="narrow stack"><div class="row">${buddy(S.buddy,72,{mood:'flat'})}<h1 class="h1" style="font-size:32px">Life happens. We moved things.</h1></div>
+ <div class="card stack"><span class="label">New plan</span>
+  ${sc.filter(x=>!x.done).map(x=>`<div class="row"><b style="width:92px;flex:none">${fDay(x.at)}</b><span class="grow" style="font-weight:700">${esc(x.t)}</span><span style="font-size:13px;color:var(--muted)">${fTime(x.at)}</span></div>`).join('')}
+  <div class="row" style="color:var(--muted)"><b style="width:92px;flex:none;color:var(--coral-ink)">${fDay(dueAt(k))}</b><span>Due · ${fTime(dueAt(k))}</span></div></div>
+ ${streak()?'<div class="chip violet" style="padding:12px 14px;font-size:15px;border-radius:16px">Streak freeze used. Your streak is safe.</div>':''}
+ <button class="btn" data-go="home">Sounds good</button>${n?`<button class="btn ghost" data-act="startStep" data-arg="${k}:${n.i}">Actually, I can start now</button>`:''}</div>`}};
+V.check=()=>{const a=A();const items=a.brief.map(b=>[b[0]+' '+b[1],'From your brief']).concat(a.rubric.map(r=>['Quick pass on '+r.replace(/ \d+%$/,'').toLowerCase(),'Rubric · '+r]));const done=items.filter((x,i)=>S.checks[S.assign+i]).length;
+ return{app:appOf(),tab:'home',html:`
+ <div class="row">${back()}<div class="grow"><div class="label">Final check · ${fLeft(S.assign)}</div><h1 class="h2">Before you hand it in</h1></div></div>
+ <div class="narrow stack"><div class="row" style="justify-content:space-between"><span class="lead">Easy marks people lose by rushing</span><b class="tnum">${done}/${items.length}</b></div><div class="bar"><i style="width:${Math.round(done/items.length*100)}%;background:#12A26E"></i></div>
+ ${items.map(([l,s],i)=>{const on=!!S.checks[S.assign+i];return `<button class="card row" data-act="check" data-arg="${i}" aria-pressed="${on}" style="text-align:left;padding:12px 14px;border:2px solid ${on?'#12A26E':'transparent'}"><span style="width:28px;height:28px;border-radius:9px;background:${on?'#12A26E':'var(--line)'};color:#fff;display:flex;align-items:center;justify-content:center;flex:none">${I('check',16,3)}</span><span class="grow"><span style="display:block;font-weight:700;font-size:15px">${l}</span><span style="font-size:13px;color:var(--muted)">${s}</span></span></button>`}).join('')}
+ <div class="cta-bar">${done===items.length?`<button class="btn" style="background:#12A26E" data-act="handIn">I handed it in on ${isPloy()?'the class page':'Teams'}</button>`:`<div class="btn" style="background:var(--line);color:var(--muted)">${items.length-done} more to go</div>`}</div></div>`}};
+V.submitted=()=>{const k=S.assign,a=A(),early=daysTo(dueAt(k))-daysTo(S.submitted[k]||Date.now()),took=S.log.filter(l=>l.k===k).reduce((x,l)=>x+l.min,0),sc=S.sched[k]||[];const guess={'2h':'~2h','4h':'~4h','6h':'6h+','?':'?'}[S.timePick]||'?';
+ return{tone:'night',html:`
+ <div class="stack" style="align-items:center;text-align:center;padding-top:20px"><div class="ring" style="width:150px;height:150px;background:var(--sun);transform:rotate(-8deg);animation:pop .6s cubic-bezier(.2,1.4,.4,1) both"><div class="ring" style="width:126px;height:126px;border:3px dashed #1B1530;color:#1B1530;flex-direction:column">${I('focus',40,2)}<b style="font-family:var(--display)">${early>=1?'EARLY BIRD':'ON TIME'}</b></div></div>
+ <h1 class="h1">${early>=2?'Handed in. '+early+' days early.':early===1?'Handed in. A whole day early.':'Handed in. Right on time.'}</h1><p class="lead">${a.title}. No all-nighter needed.</p></div>
+ <div class="card stack"><span class="label" style="color:#BDB4E6">Quick look back</span><div class="row">${[['You guessed',guess,''],['Focus time',fmtMin(took),'color:var(--sun)'],['Quests',sc.filter(x=>x.done).length+'/'+sc.length,'']].map(([lb,n,st])=>`<div class="grow"><div style="font-size:13px;color:#BDB4E6">${lb}</div><div class="clock" style="font-size:26px;${st}">${n}</div></div>`).join('')}</div><p style="color:#E4DEFF">We'll use this to plan your next one better.</p></div>
+ <div class="bottom"><button class="btn sun" data-go="me">See my collection</button><button class="btn ghost" style="color:var(--sun)" data-go="home">Back home</button></div>`}};
+V.me=()=>{const t=S.meTab,sk=streak(),subs=Object.keys(S.submitted),early=subs.filter(k=>S.submitted[k]<mid(dueAt(k))).length,total=S.log.reduce((x,l)=>x+l.min,0),qd=Object.values(S.sched).reduce((x,sc)=>x+sc.filter(s=>s.done).length,0);
+ const st=[['First Quest','1','#5FD4A0',S.log.length>0],['Early Bird','EB','#FFC53D',early>0],['5-Day Streak','5','#FF9E7A',sk>=5],['Zero-Panic Week','0','#7CB8FF',sk>=7],['Group Hero','GH','#B9A6FF',!!S.submitted.exhibition],['100 Focus Hours','100','#FFC53D',total>=6000]];
+ const titles=['Fresh Starter','Steady Starter','Quest Runner','Focus Pro','Deadline Legend'];
+ return{app:'alex',tab:'me',html:`
+ <div class="row"><div class="card" style="padding:10px;flex:none">${buddy(S.buddy,80,{glasses:S.glasses,cls:'bob'})}</div><div class="grow stack-s"><h1 class="h2">Alex &amp; ${esc(S.buddyName)}</h1><span class="label">Level ${lvl()} · ${titles[Math.min(lvl()-1,4)]}</span><div class="bar"><i style="width:${S.xp%100}%"></i></div><span style="font-size:13px;color:var(--muted)" class="tnum">${S.xp%100} / 100 XP to Level ${lvl()+1}</span></div></div>
+ <div class="cols"><div class="stack"><div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:6px;padding:4px;border-radius:16px;background:var(--violet-soft)">${['Stickers','Wardrobe','Stats'].map(x=>`<button data-act="meTab" data-arg="${x}" aria-pressed="${x===t}" style="min-height:40px;border-radius:12px;font-weight:700;background:${x===t?'var(--card)':'transparent'}">${x}</button>`).join('')}</div>
+ ${t==='Stickers'?`<div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px">${st.map(([n,m,c,g])=>`<div class="card stack-s" style="align-items:center;padding:12px 6px;opacity:${g?1:.5}"><span class="ring" style="width:56px;height:56px;background:${g?c:'var(--soft)'};border:2px dashed ${g?'#1B1530':'var(--line)'};font-family:var(--display);font-weight:800;color:${g?'#1B1530':'var(--muted)'}">${g?m:I('lock',20)}</span><span style="font-size:13px;font-weight:700;text-align:center">${n}</span></div>`).join('')}</div><p class="lead" style="font-size:14px">${st.filter(x=>x[3]).length} of ${st.length} collected${S.log.length?'':'. Finish your first quest to get one.'}</p>`:''}
+ ${t==='Wardrobe'?`<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">${[['Nerd glasses',S.glasses?'Wearing now':'Unlocked',1],['Headphones',S.xp>=100?'Unlocked':Math.min(S.xp,100)+' / 100 XP',S.xp>=100],['Beanie',subs.length>=3?'Unlocked':'Hand in 3 assignments ('+subs.length+'/3)',subs.length>=3],['Tiny scarf',sk>=10?'Unlocked':'10-day streak ('+sk+'/10)',sk>=10]].map(([n,s,on])=>`<div class="card stack-s" style="border:2px solid ${on?'var(--violet)':'transparent'};opacity:${on?1:.7}"><b>${n}</b><span style="font-size:13px;color:var(--muted)">${s}</span></div>`).join('')}</div>`:''}
+ ${t==='Stats'?`<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px">${[[fmtMin(weekMin()),'focus this week'],[qd,'quests done'],[sk+(sk===1?' day':' days'),'current streak'],[subs.length?early+'/'+subs.length:'0','handed in early']].map(([n,lb])=>`<div class="card"><div class="clock" style="font-size:26px">${n}</div><div style="font-size:13px;color:var(--muted)">${lb}</div></div>`).join('')}</div><p class="lead" style="font-size:14px">Counting since ${fDate(epoch())}.</p>`:''}</div>
+ <div class="card" style="padding:0"><div class="row" style="justify-content:space-between;padding:16px;border-bottom:1px solid var(--line)"><b>School account</b><span style="color:var(--mint-ink);font-weight:700;font-size:14px">Teams connected</span></div><button class="row" data-go="pause" style="justify-content:space-between;padding:16px;width:100%"><b>Paused apps</b><span style="color:var(--muted);font-size:14px">${Object.values(S.apps).filter(Boolean).length} apps</span></button><button class="row" data-act="switchPloy" style="justify-content:space-between;padding:16px;width:100%;border-top:1px solid var(--line)"><b>Demo: see Ploy's version</b><span style="color:var(--violet-ink);font-size:14px;font-weight:700">Switch</span></button>${logoutRow()}<button class="row" data-act="reset" style="justify-content:space-between;padding:16px;width:100%;border-top:1px solid var(--line)"><b>Start over</b><span style="color:var(--coral-ink);font-size:14px;font-weight:700">Erase everything</span></button></div></div>`}};
+V.classes=()=>{const rows=ALEX_LIST.map(k=>({k,s:S.submitted[k]?'DONE':S.planned[k]?'DOING':S.remind[k]?'REMIND ONLY':'TO DO'}));
+ const chip={DOING:'sun','TO DO':'violet','REMIND ONLY':'','DONE':'mint'};const f=S.clsFilter;
+ const vis=rows.filter(r=>f==='All'||ASG[r.k].cls.startsWith(f));
+ return{app:'alex',tab:'classes',html:`
+ <h1 class="h1">Classes</h1>
+ <div class="row wrap" style="gap:8px">${['All','ICD357','ICD366','ICD382','ENV101'].map(c=>`<button class="opt ${f===c?'on':''}" style="min-height:40px;padding:0 14px" data-act="cls" data-arg="${c}">${c}</button>`).join('')}</div>
+ <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px">${[['to do',vis.filter(r=>r.s==='TO DO'||r.s==='REMIND ONLY').length],['in progress',vis.filter(r=>r.s==='DOING').length],['handed in',vis.filter(r=>r.s==='DONE').length]].map(([lb,n])=>`<div class="card" style="padding:12px"><div class="clock" style="font-size:24px">${n}</div><div style="font-size:13px;color:var(--muted)">${lb}</div></div>`).join('')}</div>
+ <div class="stack-s">${vis.map(r=>{const a=ASG[r.k];return `<button class="card row" style="text-align:left;padding:14px 16px" data-act="${r.s==='DOING'?'openPlan':r.s==='DONE'?'openDone':'openAssign'}" data-arg="${r.k}"><span style="width:10px;height:38px;border-radius:5px;background:${a.color};flex:none"></span><span class="grow"><span style="display:block;font-weight:700">${a.title}</span><span style="font-size:13px;color:var(--muted)">${a.cls} · ${r.s==='DONE'?'handed in '+fDay(S.submitted[r.k]):fLeft(r.k)+' · '+fDate(dueAt(r.k))}</span></span><span class="chip ${chip[r.s]}">${r.s}</span></button>`}).join('')}</div>`}};
+
+// ===== Ploy (Google) =====
+const pAt=(off,h,m)=>{const x=new Date(addDays(epoch(),off));x.setHours(h,m,0,0);return x.getTime()};
+const PQ=()=>pAt(4,9,0),PD=()=>pAt(5,23,59),PE=()=>dueAt('essay');
+const at7=(t,d,h=19,m=0)=>{const x=new Date(addDays(mid(t),-d));x.setHours(h,m,0,0);return x.getTime()};
+V['g-signin']=()=>({tone:'light',html:`
+ ${back()}
+ <h1 class="h1">No school login? Your Google works too.</h1>
+ <div class="card stack">${[['check','Deadlines + reminders go into Google Calendar','mint'],['check','We find your free time so pings don\'t clash','mint'],['close','We never read your email or Drive','coral']].map(([i,t,c])=>`<div class="row" style="color:var(--${c}-ink)">${I(i,22,2.5)}<span style="color:var(--ink)">${t}</span></div>`).join('')}</div>
+ <div class="bottom"><button class="btn line" style="border-color:var(--ink)" data-act="gOpen"><span class="ring" style="width:26px;height:26px;background:var(--ink);color:var(--bg);font-weight:800;font-size:15px">G</span>Continue with Google</button><button class="btn ghost" data-act="persona" data-arg="ploy" data-go="g-add">Skip, use it without an account</button></div>
+ ${S.gStep?`<div class="scrim"><div class="sheet"><span style="align-self:center;width:40px;height:5px;border-radius:3px;background:var(--line)"></span>
+  ${S.gStep===1?`<span class="label">Choose an account</span><button class="card row" data-act="gPick" style="border:2px solid var(--line);text-align:left"><span class="ring" style="width:40px;height:40px;background:#FF9E7A;color:#1B1530;font-weight:800">P</span><span><b style="display:block">Ploy S.</b><span style="font-size:13px;color:var(--muted)">ploy.s@gmail.com</span></span></button><button class="btn ghost" data-act="gClose">Cancel</button>`
+  :`<span class="label">ploy.s@gmail.com</span><p style="line-height:1.4">HeadStart wants to <b>add and edit events</b> in a new "HeadStart" calendar.</p><p class="lead" style="font-size:14px">Your other calendars stay private. It only checks when you're busy.</p><button class="btn" data-act="gAllow">Allow</button><button class="btn ghost" data-act="gClose">Cancel</button>`}</div></div>`:''}`});
+V['g-add']=()=>{const q=[['marketing essay mkt201 due '+DOW[new Date(PE()).getDay()].toLowerCase()+' '+new Date(PE()).getDate(),'Marketing essay','MKT201',fDate(PE()),'#F26B5B'],['brand audit slides '+DOW[new Date(PD()).getDay()].toLowerCase(),'Brand audit slides','MKT210',fDate(PD()),'#3B82F6'],['stats quiz 3 '+DOW[new Date(PQ()).getDay()].toLowerCase()+' 9am','Stats quiz 3','STA101',fDate(PQ())+', 9 am','#12A26E']];const s=S.addStep,cur=q[Math.min(s,q.length-1)],end=s>=q.length;
+ return{tone:'light',html:`
+ <div class="row" style="justify-content:space-between">${back()}<span style="font-size:14px;font-weight:700;color:var(--muted)">Signed in · ploy.s@gmail.com</span><span style="width:44px"></span></div>
+ <h1 class="h1">What's due? Just type it like a text.</h1>
+ <label class="stack-s"><span class="label">Assignment</span><input id="add-input" value="${end?'':cur[0]}" style="height:56px;border-radius:18px;border:2px solid var(--violet);padding:0 16px;font-weight:600;font-size:17px;background:var(--card)"></label>
+ <div class="row wrap" style="gap:6px"><span style="font-size:13px;color:var(--muted)">We got:</span><span class="chip" style="background:var(--card)">${end?'Title':cur[1]}</span><span class="chip" style="background:var(--card)">${end?'Class':cur[2]}</span><span class="chip sun">${end?'Due date':cur[3]}</span></div>
+ <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><button class="btn line sm" style="width:100%;${S.snapped?'background:var(--mint-soft)':''}" data-act="snap">${S.snapped?'Brief saved':'Snap the brief'}</button><button class="btn dark sm" style="width:100%" data-act="addOne">Add it</button></div>
+ <span class="label">My list · ${Math.min(s,3)}</span>
+ <div class="stack-s">${q.slice(0,s).map((x,i)=>`<div class="card row pop" style="padding:12px 14px"><span style="width:8px;height:32px;border-radius:4px;background:${x[4]}"></span><div><b style="display:block">${x[1]}</b><span style="font-size:12px;color:var(--muted)">${x[2]} · ${x[3]}${i===0&&S.snapped?' · brief saved':''}</span></div></div>`).join('')||'<div class="dash" style="text-align:center;color:var(--muted);padding:16px">Nothing yet. Tap "Add it".</div>'}</div>
+ <div class="bottom"><button class="btn" data-go="g-setup">Done adding</button></div>`}};
+V['g-setup']=()=>({tone:'light',html:`
+ ${back()}<h1 class="h1">Two taps and you're in</h1>
+ <span class="label">1 · Pick a buddy</span>
+ <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px">${[['Mochi','#FFC53D'],['Bao','#5FD4A0'],['Tofu','#7CB8FF']].map(([n,c])=>`<button class="card stack-s" data-act="ployBuddy" data-arg="${n}" style="align-items:center;border:3px solid ${S.ployBuddy===n?'var(--violet)':'transparent'}">${buddy(c,64)}<b>${n}</b></button>`).join('')}</div>
+ <span class="label">2 · What steals your time?</span>
+ <div class="row wrap" style="gap:8px">${['TikTok','Instagram','YouTube','Netflix','Games','X'].map(a=>`<button class="opt ${S.ployApps[a]?'on':''}" style="min-height:44px;padding:0 16px" data-act="ployApp" data-arg="${a}">${a}</button>`).join('')}</div>
+ <div class="chip sun" style="padding:12px 14px;font-size:15px;font-weight:500;border-radius:16px">We only pause these when you start a focus sprint.</div>
+ <div class="bottom"><button class="btn" data-go="g-style">Next</button></div>`});
+V['g-style']=()=>({tone:'light',html:`
+ ${back()}<div class="stack-s"><h1 class="h1">How do you like to work?</h1><p class="lead">No wrong answer. You can switch per assignment.</p></div>
+ ${[['remind','Just remind me',"I'll do it my way. Ping me before it's due.",'No steps','No pressure'],['quests','Give me quests','Break it into small steps and put them in my week.','Small steps','XP + stickers']].map(([k,t,b,c1,c2])=>{const on=S.style===k;return `<button class="card stack-s" data-act="style" data-arg="${k}" aria-pressed="${on}" style="text-align:left;padding:20px;border:3px solid ${on?'var(--ink)':'var(--line)'};background:${on?'var(--ink)':'var(--card)'};color:${on?'var(--bg)':'var(--ink)'}"><span style="font-family:var(--display);font-weight:800;font-size:24px">${t}</span><span style="line-height:1.4">${b}</span><span class="row" style="gap:6px"><span class="chip" style="background:${on?'var(--sun)':'var(--soft)'};color:${on?'#1B1530':'inherit'}">${c1}</span><span class="chip" style="background:${on?'var(--sun)':'var(--soft)'};color:${on?'#1B1530':'inherit'}">${c2}</span></span></button>`}).join('')}
+ <div class="bottom"><button class="btn" data-act="styleGo">${S.style==='remind'?'Put reminders in Google Calendar':'Make my quests'}</button></div>`});
+V['g-cal']=()=>{const P=['#E3EEFF','#3B82F6'],D=['#FFE1DC','#F26B5B'],T=['#DDF3E9','#12A26E'];
+ let ev=[[at7(PQ(),1),'Stats quiz tomorrow','7 pm · reminder',P],[PQ(),'Stats quiz 3 · due','9 am',D],[at7(PE(),3),'Essay: 3 days left','7 pm · reminder',P],[PD(),'Brand audit slides · due','11:59 pm',D],[at7(PE(),1),'Essay: due tomorrow','7 pm · reminder',P],[PE(),'Marketing essay · due','11:59 pm',D]];
+ if(S.tinyCal) ev=ev.concat([[at7(PQ(),1,20,30),'Tiny start: quiz notes','8:30 pm · 10 min',T],[at7(PE(),3,20,0),'Tiny start: 3 bad sentences','8 pm · 10 min',T]]);
+ ev=ev.sort((x,y)=>x[0]-y[0]).map(e=>[DOW[new Date(e[0]).getDay()].toUpperCase(),new Date(e[0]).getDate(),e[1],e[2],e[3]]);
+ return{tone:'light',html:`
+ ${back()}<div class="stack-s"><h1 class="h1" style="font-size:32px">Done. It's all in your Google Calendar.</h1><span class="row" style="gap:6px;font-size:14px;color:var(--muted)"><span style="width:10px;height:10px;border-radius:3px;background:var(--mint)"></span>New calendar: "HeadStart" · ${ev.length} events</span></div>
+ <div class="card" style="padding:6px 16px">${ev.map((e,i)=>`<div class="row" style="padding:9px 0;border-bottom:1px solid var(--line);animation:rise .4s ease-out both;animation-delay:${i*.07}s"><div style="width:44px;text-align:center;flex:none"><div style="font-size:11px;font-weight:700;color:var(--muted)">${e[0]}</div><div style="font-size:17px;font-weight:800" class="tnum">${e[1]}</div></div><div class="grow" style="border-radius:10px;background:${e[4][0]};border-left:4px solid ${e[4][1]};padding:6px 10px;color:#1B1530"><div style="font-weight:700;font-size:14px">${e[2]}</div><div style="font-size:12px">${e[3]}</div></div></div>`).join('')}</div>
+ <button class="card row" data-act="tinyCal" style="text-align:left"><span class="grow"><b style="display:block">Add 10-min "tiny start" slots</b><span style="font-size:13px;color:var(--muted)">Optional. Placed in your free time.</span></span><span class="toggle ${S.tinyCal?'on':''}"><span></span></span></button>
+ <div class="bottom"><button class="btn" data-go="g-home">Looks good</button></div>`}};
+V['g-home']=()=>({app:'ploy',tab:'home',html:`
+ <div class="row"><button class="icon-btn" data-go="g-me" aria-label="Me">${buddy('#5FD4A0',36)}</button><div class="grow"><div style="font-size:13px;color:var(--muted)">${greet()} · ${fDate(Date.now())}</div><h1 class="h2">Hey Ploy</h1></div><button class="icon-btn" style="background:var(--ink);color:var(--bg)" data-go="g-add" aria-label="Add assignment">${I('plus',20,2.6)}</button></div>
+ <div class="cols"><div class="stack"><div class="row" style="justify-content:space-between"><span class="label">Coming up</span><button class="chip mint" style="min-height:36px" data-go="g-cal">${I('cal',14)} Synced to Google Calendar</button></div>
+ ${[[daysTo(PQ()),'Stats quiz 3','STA101 · '+fDate(PQ())+', 9 am · ping the night before','var(--mint-soft)',null],[daysTo(PD()),'Brand audit slides','MKT210 · '+fDate(PD())+' · ping 2 days + 1 day before','var(--violet-soft)',null],[daysTo(PE()),'Marketing essay','MKT201 · '+fDate(PE())+' · '+(S.planned.essay?'quests planned':'ping 3 days + 1 day before'),'var(--coral-soft)','essay']].map(([d,t,s,c,k])=>`<button class="card row" style="text-align:left" ${k?`data-act="openAssign" data-arg="${k}"`:''}><div class="ring" style="width:56px;height:56px;border-radius:18px;background:${c};flex-direction:column;flex:none"><span class="clock" style="font-size:22px">${d}</span><span style="font-size:11px;font-weight:700">days</span></div><div class="grow"><b style="display:block">${t}</b><span style="font-size:13px;color:var(--muted)">${s}</span></div>${I('bell',20)}</button>`).join('')}</div>
+ <div class="stack">${S.offer?`<div class="card stack" style="background:var(--sun-soft);color:var(--sun-ink)"><p style="line-height:1.4"><b>Psst.</b> 10 minutes on the essay today = way less stress on ${DOWS[new Date(addDays(PE(),-1)).getDay()]}. Totally optional.</p><div class="row"><button class="btn dark sm grow" data-go="g-sprint">10 min, fine</button><button class="btn light sm grow" data-act="nope">Nope</button></div></div>`:''}
+ <button class="btn ghost" data-go="g-ignored">Demo: skip ahead 5 days</button></div></div>`});
+V['g-ignored']=()=>({tone:'night',html:`
+ <div class="stack" style="align-items:center;gap:2px;padding-top:24px"><span style="color:var(--night-ink)">${(d=>DOWS[d.getDay()]+' '+d.getDate()+' '+MON[d.getMonth()])(new Date(addDays(PE(),-2)))}</span><span class="clock tnum" style="font-size:92px;font-weight:600">11:41</span></div>
+ <div class="row" style="justify-content:center"><span class="chip" style="background:var(--night-2);color:#fff"><span style="width:8px;height:8px;border-radius:4px;background:var(--coral)"></span>Essay · 2 days · not started</span></div>
+ <div class="bottom"><span style="font-size:13px;font-weight:700;color:#BDB4E6">3 unread from HeadStart</span>
+ ${[['Essay due in 2 days. Bao is getting nervous.','now','flat','#fff'],['Essay: 3 days left. Even 10 min helps.',fWhen(at7(PE(),3)).replace(/^(Today|Tomorrow|Yesterday), /,''),'','#ECE9F7'],['Brand audit slides due tomorrow!',fDate(addDays(PD(),-1))+', 9 am','','#ECE9F7']].map(([t,w,m,bg])=>`<button class="row" data-go="g-tiny" style="border-radius:20px;background:${bg};color:#1B1530;padding:12px 14px;text-align:left;width:100%">${buddy('#5FD4A0',34,{mood:m})}<span class="grow"><b style="display:block;font-size:15px">${t}</b><span style="font-size:13px;color:#5D5875">${w}</span></span></button>`).join('')}
+ <button class="btn mint" data-go="g-tiny">Ugh, fine. Open it.</button><button class="btn ghost" style="color:var(--night-ink)" data-go="g-rescue">Keep ignoring (skip to Friday)</button></div>`});
+V['g-tiny']=()=>({tone:'light',html:`
+ ${back()}<div class="row">${buddy('#5FD4A0',64)}<h1 class="h1" style="font-size:30px">No plan. Just one tiny start?</h1></div><p class="lead">Pick one. 10 minutes. Then you're free.</p>
+ ${[['Write 3 bad sentences',"Ugly is fine. You'll fix them later."],['Read the brief + say the question in your words','Type it in one line.'],['Find just 1 good source','One. Not ten.']].map(([t,s],i)=>`<button class="card row" data-act="tinyPick" data-arg="${i}" style="text-align:left;border:3px solid ${S.tinyPick===i?'var(--violet)':'transparent'}"><span class="clock" style="font-size:22px;width:28px">${i+1}</span><span class="grow"><b style="display:block">${t}</b><span style="font-size:13px;color:var(--muted)">${s}</span></span></button>`).join('')}
+ <div class="chip violet" style="padding:12px 14px;font-size:14px;border-radius:16px;font-weight:500">Still not started by Thursday night? We'll build a rescue plan. No judging.</div>
+ <div class="bottom"><button class="btn" data-go="g-sprint">Start 10 min</button><button class="btn ghost" data-go="g-rescue">Not tonight</button></div>`});
+V['g-rescue']=()=>({tone:'night',html:`
+ <div class="row" style="justify-content:space-between">${back()}<span class="chip" style="background:var(--coral);color:#fff;animation:pulse 1.4s ease-in-out infinite">RESCUE MODE</span></div>
+ <div class="stack-s"><span style="color:#BDB4E6;font-size:14px">${fDate(PE())}, 4:30 pm · Marketing essay</span><h1 class="h1">7h 29m left.<br>Very doable.</h1></div>
+ <div class="card stack-s">${[['4:45','Sprint 1 · messy draft','45m','w'],['5:30','Snack break','10m','r'],['5:40','Sprint 2 · finish draft','45m','w'],['6:25','Dinner, no phone guilt','40m','r'],['7:05','Sprint 3 · sources + refs','30m','w'],['7:35','Quick check','20m','w'],['8:00','Hand in. 4h to spare.','','d']].map(([t,l,n,k])=>`<div class="row"><span class="tnum" style="width:44px;font-size:13px;color:#BDB4E6;font-weight:700">${t}</span><span style="width:10px;height:10px;border-radius:5px;background:${k==='w'?'var(--sun)':k==='d'?'var(--mint)':'var(--night-3)'};flex:none"></span><span class="grow" style="font-weight:${k==='w'?700:500}">${l}</span><span style="font-size:13px;color:#BDB4E6">${n}</span></div>`).join('')}</div>
+ <button class="card row" data-act="lock" style="text-align:left"><span class="grow" style="font-weight:700">Keep TikTok + Netflix asleep until I hand in</span><span class="toggle ${S.lock?'on':''}"><span></span></span></button>
+ <div class="bottom"><button class="btn sun" data-go="g-sprint">Start sprint 1</button></div>`});
+V['g-sprint']=()=>{if(!S.t||S.t.kind!=='sprint')newTimer('sprint',null,0,true);return timerView('sprint','Rescue mode',['Marketing essay','Messy draft. Go ugly.'],S.t&&S.t.phase==='break'?'':`<span style="text-align:center;font-size:14px;font-weight:700">TikTok, Instagram, Netflix: asleep</span>`)};
+V['g-made']=()=>({tone:'light',html:`
+ <div class="stack" style="align-items:center;text-align:center;padding-top:16px"><div class="ring" style="width:130px;height:130px;background:var(--mint);animation:pop .7s cubic-bezier(.2,1.4,.4,1) both;transform:rotate(-8deg)"><div class="ring" style="width:108px;height:108px;border:3px dashed #1B1530;color:#1B1530;font-family:var(--display);font-weight:800;line-height:1.1">CLUTCH<br>FINISH</div></div><h1 class="h1">Handed in, 3h 50m to spare</h1><p class="lead">3 sprints, 1,212 words. You did that.</p></div>
+ <div class="card stack-s"><b>Honestly, how was the rush?</b><div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">${['Fine','Stressful','Never again'].map(f=>`<button class="opt ${S.feel===f?'on':''}" style="min-height:44px" data-act="feel" data-arg="${f}">${f}</button>`).join('')}</div></div>
+ <div class="card stack-s"><b>Next essay, want a 10-min nudge 3 days before?</b>${['Yes, nudge me earlier','Keep it reminders only'].map((t,i)=>`<button class="opt ${S.next===i?'on':''}" style="min-height:46px" data-act="next" data-arg="${i}">${t}</button>`).join('')}</div>
+ <div class="bottom"><button class="btn" data-go="g-me">Save and see my profile</button></div>`});
+V['g-me']=()=>{const st=[['Clutch Finish','CF','#5FD4A0',1,'Got it: handed in on deadline day without panic.'],['First Sprint','1','#FFC53D',1,'Got it: finished your first focus sprint.'],['Early Bird','EB','',0,'Locked: hand something in a day early. Alex has this one.']];
+ return{app:'ploy',tab:'me',html:`
+ <div class="row"><div class="card" style="padding:10px;flex:none">${buddy('#5FD4A0',80,{cls:'bob'})}</div><div class="grow stack-s"><h1 class="h2">Ploy &amp; Bao</h1><span class="label">Level 2 · Deadline Ninja</span><div class="bar"><i style="width:45%;background:var(--mint)"></i></div></div></div>
+ <div class="cols"><div class="stack"><div class="card stack-s" style="background:var(--night);color:#fff"><span class="label" style="color:var(--mint)">My little goal</span><b>Start 2 days before, not 7 hours</b><div class="row"><div class="bar grow" style="background:var(--night-2)"><i style="width:15%;background:var(--sun)"></i></div><span style="font-size:13px;color:#BDB4E6">last: 7h</span></div></div>
+ <span class="label">Stickers</span><div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px">${st.map(([n,m,c,g],i)=>`<button class="card stack-s" data-act="sticker" data-arg="${i}" style="align-items:center;padding:12px 6px;opacity:${g?1:.55};border:2px solid ${S.stickerSel===i?'var(--violet)':'transparent'}"><span class="ring" style="width:52px;height:52px;background:${g?c:'var(--soft)'};border:2px dashed #1B1530;font-family:var(--display);font-weight:800;color:#1B1530">${m}</span><span style="font-size:13px;font-weight:700">${n}</span></button>`).join('')}</div>
+ <div class="chip violet" style="padding:12px 14px;font-size:14px;border-radius:14px;font-weight:500">${st[S.stickerSel][4]}</div></div>
+ <div class="card" style="padding:0"><button class="row" data-go="g-cal" style="justify-content:space-between;padding:16px;width:100%;border-bottom:1px solid var(--line)"><b>Google · ploy.s@gmail.com</b><span style="color:var(--mint-ink);font-size:14px;font-weight:700">Calendar synced</span></button><button class="row" data-go="g-style" style="justify-content:space-between;padding:16px;width:100%;border-bottom:1px solid var(--line)"><b>Work style</b><span style="color:var(--muted);font-size:14px">Reminders + nudge</span></button><button class="row" data-act="switchAlex" style="justify-content:space-between;padding:16px;width:100%"><b>Demo: see Alex's version</b><span style="color:var(--violet-ink);font-size:14px;font-weight:700">Switch</span></button>${logoutRow()}<button class="row" data-act="reset" style="justify-content:space-between;padding:16px;width:100%;border-top:1px solid var(--line)"><b>Start over</b><span style="color:var(--coral-ink);font-size:14px;font-weight:700">Erase everything</span></button></div></div>`}};
+
+// ---------- Actions ----------
+const ACT={
+ back:()=>{goBack();return false},
+ persona:a=>{S.persona=a},
+ color:c=>{S.buddy=c},glasses:()=>{S.glasses=!S.glasses},
+ app:a=>{S.apps[a]=!S.apps[a]},
+ skipReveal:()=>{go('pick',true);return false},
+ pick:i=>{S.pick=+i},
+ planPick:()=>{S.assign=ALEX_LIST[S.pick];S.qsel=0;go('assignment');return false},
+ openAssign:k=>{S.assign=k;S.qsel=0;S.how=S.useOwn[k]?'own':S.remind[k]?'remind':'suggest';go('assignment');return false},
+ openQuests:k=>{S.assign=k;go('quests');return false},
+ openPlan:k=>{S.assign=k;S.draft[k]=(S.sched[k]||[]).map(x=>({...x}));go('plan');return false},
+ openCheck:k=>{S.assign=k;go('check');return false},
+ openDone:k=>{S.assign=k;go('submitted');return false},
+ startStep:v=>{const [k,i]=v.split(':');S.assign=k;unlockAudio();newTimer('focus',k,+i,true);go('focus');return false},
+ freeFocus:()=>{newTimer('focus',null,0,false);go('focus');return false},
+ bell:k=>{S.remind[k]=!S.remind[k]},
+ time:k=>{S.timePick=k},
+ how:k=>{S.how=k},
+ ownAdd:()=>{S.own[S.assign].push(['',25,null])},
+ ownDel:i=>{S.own[S.assign].splice(+i,1);if(!S.own[S.assign].length)S.own[S.assign].push(['',25,null])},
+ ownMin:v=>{const [i,n]=v.split(':');S.own[S.assign][+i][1]=+n},
+ ownAuto:i=>{S.own[S.assign][+i][2]=null},
+ ownPlan:()=>{const list=S.own[S.assign].filter(x=>x[0].trim());if(!list.length){const f=document.getElementById('own-0');if(f){f.focus();f.placeholder='Write at least one step'}return false}S.useOwn[S.assign]=1;buildDraft(S.assign,'own');go('plan');return false},
+ planSuggest:()=>{S.useOwn[S.assign]=0;buildDraft(S.assign,'suggest');go('plan');return false},
+ qsel:i=>{S.qsel=+i},
+ shrink:i=>{S.tiny[S.assign+i]=!S.tiny[S.assign+i]},
+ cal:()=>{S.cal=!S.cal},
+ lockIn:()=>{const k=S.assign,first=!S.planned[k];S.sched[k]=(S.draft[k]||[]).map(x=>({...x})).sort((a,b)=>a.at-b.at);S.planned[k]=1;delete S.remind[k];delete S.draft[k];
+  if(isPloy()){go('g-home');return false}go(first?'nudge':'home');return false},
+ replan:()=>{const k=S.assign;delete S.draft[k];delete S.sched[k];S.planned[k]=0;go('assignment',true);return false},
+ ropt:k=>{S.remindOpts[k]=!S.remindOpts[k]},
+ remindDone:()=>{S.remind[S.assign]=1;go(isPloy()?'g-home':'home');return false},
+ snooze:()=>{S.snooze=!S.snooze},
+ skipStep:()=>{const k=S.assign,due=dueAt(k);(S.sched[k]||[]).forEach(x=>{if(!x.done){const n=addDays(x.at,1);if(n<due-2*36e5)x.at=n}});go('behind');return false},
+ pauseFocus:()=>{const t=S.t;if(!t)return;if(t.endAt)tmHold(t);else tmRun(t)},
+ tmStart:()=>{unlockAudio();tmRun(S.t)},
+ tmGo:()=>{tmApply();return false},
+ tmMore:s=>{const t=S.t;t.modal=null;t.phase='focus';t.left=+s;t.seg=+s;t.auto=10;tmRun(t)},
+ tmSkipBreak:()=>{S.t.modal='toFocus';tmApply();return false},
+ tmBreakMore:()=>{const t=S.t;t.modal=null;t.phase='break';t.left=120;t.auto=10;tmRun(t)},
+ tmEndBreak:()=>{const t=S.t;t.endAt=null;t.left=0;t.modal='toFocus';t.auto=10;alarm()},
+ tmDemo:()=>{const t=S.t;if(t.endAt)t.endAt=Date.now()+3000;else{t.left=3;tmRun(t)}},
+ tmClose:()=>{const t=S.t;if(t&&!t.started)S.t=null;go(t&&t.kind==='sprint'?'g-rescue':'home');return false},
+ questDone:()=>{const t=S.t;if(!t){go('home');return false}
+  const cur=t.phase==='focus'&&t.started&&!t.modal?t.seg-tLeft(t):0,spent=Math.max(1,Math.round((t.focusSec+cur)/60)),xp=Math.max(10,Math.round(spent*.9)),before=lvl();
+  if(t.k&&S.sched[t.k]&&S.sched[t.k][t.i]){S.sched[t.k][t.i].done=true;S.sched[t.k][t.i].doneAt=Date.now()}
+  S.xp+=xp;S.log.push({t:Date.now(),d:dayKey(Date.now()),min:spent,k:t.k||(t.kind==='sprint'?'essay':null)});
+  S.last={k:t.k,i:t.i,min:spent,xp,up:lvl()>before};const kind=t.kind;S.t=null;S.mood=null;go(kind==='sprint'?'g-made':'done');return false},
+ handIn:()=>{S.submitted[S.assign]=Date.now();go('submitted');return false},
+ laptopTip:()=>{S.laptop=!S.laptop},
+ pass:()=>{S.pass=true},
+ mood:m=>{S.mood=m},
+ check:i=>{S.checks[S.assign+i]=!S.checks[S.assign+i]},
+ meTab:t=>{S.meTab=t},cls:c=>{S.clsFilter=c},
+ switchPloy:()=>{S.persona='ploy';S.t=null;go('g-home');return false},
+ switchAlex:()=>{S.persona='alex';S.t=null;go('home');return false},
+ gOpen:()=>{S.gStep=1},gPick:()=>{S.gStep=2},gClose:()=>{S.gStep=0},
+ gAllow:()=>{S.gStep=0;if(restoreAcct('ploy')){go('g-home');return false}S.persona='ploy';go('g-add');return false},
+ signIn:who=>{if(restoreAcct(who)){go('home');return false}S.persona=who;go('found');return false},
+ logoutAsk:()=>{S.logoutSheet=true},logoutCancel:()=>{S.logoutSheet=false},
+ logout:()=>{S.logoutSheet=false;S.t=null;try{localStorage.setItem('hsAcct_'+S.persona,JSON.stringify(S));localStorage.removeItem(SAVE)}catch(e){}try{history.replaceState(null,'','#welcome')}catch(e){}location.reload();return false},
+ snap:()=>{S.snapped=true},addOne:()=>{S.addStep=Math.min(3,S.addStep+1)},
+ ployBuddy:n=>{S.ployBuddy=n},ployApp:a=>{S.ployApps[a]=!S.ployApps[a]},
+ style:k=>{S.style=k},
+ styleGo:()=>{if(S.style==='remind')go('g-cal');else{S.assign='essay';S.qsel=0;go('assignment')}return false},
+ tinyCal:()=>{S.tinyCal=!S.tinyCal},nope:()=>{S.offer=false},
+ tinyPick:i=>{S.tinyPick=+i},lock:()=>{S.lock=!S.lock},
+ reset:()=>{try{localStorage.removeItem(SAVE);localStorage.removeItem('hsAcct_alex');localStorage.removeItem('hsAcct_ploy')}catch(e){}try{history.replaceState(null,'','#welcome')}catch(e){}location.reload();return false},
+ feel:f=>{S.feel=f},next:i=>{S.next=+i},sticker:i=>{S.stickerSel=+i}
+};
+function restoreAcct(who){let a=null;try{a=JSON.parse(localStorage.getItem('hsAcct_'+who)||'null')}catch(e){}if(!a)return false;Object.assign(S,a);S.persona=who;S.logoutSheet=false;S.welcomeBack=true;try{localStorage.removeItem('hsAcct_'+who)}catch(e){}return true}
+function unlockAudio(){try{audioCtx=audioCtx||new (window.AudioContext||window.webkitAudioContext)();audioCtx.resume&&audioCtx.resume()}catch(e){}}
+
+// ---------- Shell ----------
+function shell(v){
+ const alex=[['home','home','Home'],['classes','classes','Classes'],['focus','focus','Focus'],['me','me','Me']];
+ const ploy=[['g-home','home','Home'],['focus','focus','Focus'],['g-me','me','Me']];
+ const items=v.app==='ploy'?ploy:alex, tabKey=v.tab;
+ const isOn=(r)=>(r==='home'||r==='g-home')?tabKey==='home':r.endsWith(tabKey)&&tabKey!=='home';
+ const who=v.app==='ploy'?'Ploy · Google':'Alex · Teams';
+ return `<div class="shell"><aside class="side" aria-label="Main">
+  <div class="row" style="margin-bottom:18px">${v.app==='ploy'?buddy('#5FD4A0',40):buddy(S.buddy,40,{glasses:S.glasses})}<div><div style="font-family:var(--display);font-weight:800;font-size:20px">HeadStart</div><div style="font-size:12px;color:var(--muted)">${who}</div></div></div>
+  ${items.map(([r,i,l])=>`<a href="#${r}" class="nav ${isOn(r)?'on':''}" data-go="${r}">${I(i,20)}${l}</a>`).join('')}
+  <div style="margin-top:auto" class="stack-s"><span class="label">Demo</span><button class="btn line sm" style="width:100%" data-act="${v.app==='ploy'?'switchAlex':'switchPloy'}">See ${v.app==='ploy'?"Alex's":"Ploy's"} version</button><button class="btn ghost" style="min-height:40px" data-act="logoutAsk">Log out</button></div>
+ </aside><main class="main scroller"><div class="content view-in">${v.html}</div></main>
+ <nav class="tabs" aria-label="Tabs">${items.map(([r,i,l])=>`<a href="#${r}" class="tab ${isOn(r)?'on':''}" data-go="${r}">${I(i,24)}${l}</a>`).join('')}</nav>${logoutSheet()}</div>`;
+}
+function full(v){return `<div class="full scroller t-${v.tone}"><div class="full-in view-in">${v.html}</div></div>`}
+
+// ---------- Router ----------
+const SAVE='hsSave3';
+const app=document.getElementById('app');
+function fitHeight(){const vv=window.visualViewport;let h=Math.max(window.innerHeight||0,document.documentElement.clientHeight||0,vv?Math.round(vv.height):0);try{const sa=navigator.standalone||matchMedia('(display-mode: standalone)').matches||matchMedia('(display-mode: fullscreen)').matches;const portrait=(window.innerHeight||0)>=(window.innerWidth||0);if(sa&&screen&&screen.height){const sh=portrait?Math.max(screen.height,screen.width):Math.min(screen.height,screen.width);if(sh>h)h=sh}}catch(e){}document.documentElement.style.setProperty('--app-h',h+'px');try{window.scrollTo(0,0)}catch(e){}}
+fitHeight();window.addEventListener('resize',fitHeight);window.addEventListener('pageshow',fitHeight);window.addEventListener('load',()=>{fitHeight();setTimeout(fitHeight,300)});if(window.visualViewport)visualViewport.addEventListener('resize',fitHeight);window.addEventListener('orientationchange',()=>setTimeout(fitHeight,350));
+let io=null;
+function enhance(){
+ const sc=app.querySelector('.scroller');if(!sc)return;
+ const box=sc.querySelector(':scope > .content, :scope > .full-in');
+ let hdr=null;if(box){const f=box.firstElementChild;if(f&&(box.classList.contains('content')||(f.classList.contains('row')&&f.querySelector('button'))))hdr=f}
+ if(hdr){hdr.classList.add('hdr');box.classList.add('has-hdr')}
+ const onScroll=()=>{if(hdr)hdr.style.setProperty('--s',Math.min(1,sc.scrollTop/56).toFixed(3))};sc.addEventListener('scroll',onScroll,{passive:true});onScroll();
+ if(io)io.disconnect();
+ if('IntersectionObserver' in window){const h=sc.clientHeight;io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('in');io.unobserve(e.target)}}),{root:sc,threshold:.08});
+  sc.querySelectorAll('.card,.dash,.qnode').forEach(el=>{if(el.closest('.hdr,.sheet,.cta-bar,.bottom'))return;const r=el.getBoundingClientRect(),top=r.top-sc.getBoundingClientRect().top;if(top>h-10){el.classList.add('rv');io.observe(el)}})}
+}
+function render(entering){
+ const sc0=app.querySelector('.scroller'),keep=entering?0:(sc0?sc0.scrollTop:0);
+ const fn=V[route]||V.welcome; if(route.startsWith('g-'))S.persona='ploy';
+ const v=fn();
+ app.innerHTML=v.app?shell(v):full(v);
+ document.title='HeadStart';
+ document.body.dataset.tone=v.app?'app':v.tone;
+ const sc=app.querySelector('.scroller');if(sc&&keep)sc.scrollTop=keep;
+ enhance();
+ try{localStorage.setItem(SAVE,JSON.stringify({S:S,route:route,stack:stack.slice(-30)}))}catch(e){}
+ if(v.enter)v.enter();
+}
+function clearTimers(){timers.forEach(t=>{clearTimeout(t);clearInterval(t)});timers=[]}
+function setRoute(r){
+ clearTimers();
+ if(r===route){render(false);return}
+ if(route==='home'&&r!=='home')S.welcomeBack=false;
+ route=r;S.laptop=false;S.gStep=0;
+ try{if(location.hash!=='#'+r)history.replaceState(null,'','#'+r)}catch(e){}
+ render(true);
+}
+function go(r,replace){if(isPloy()){if(r==='home')r='g-home';if(r==='me')r='g-me'}if(!replace&&route!==r)stack.push(route);setRoute(r)}
+function goBack(){const r=stack.pop();setRoute(r||(isPloy()?'g-home':'welcome'))}
+window.addEventListener('hashchange',()=>{const r=location.hash.slice(1);if(V[r]&&r!==route){if(stack[stack.length-1]===r)stack.pop();else stack.push(route);setRoute(r)}});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){fitHeight();clearTimers();render(false)}});
+
+app.addEventListener('click',e=>{
+ const t=e.target.closest('[data-act],[data-go]'); if(!t||!app.contains(t))return;
+ if(t.tagName==='A')e.preventDefault();
+ if(e.target.closest('.sheet')&&t.classList.contains('scrim'))return;
+ let handled=false;
+ if(t.dataset.act&&ACT[t.dataset.act]){const res=ACT[t.dataset.act](t.dataset.arg);if(res===false)handled=true}
+ if(!handled&&t.dataset.go){go(t.dataset.go);return}
+ if(!handled){clearTimers();render(false)}
+});
+app.addEventListener('pointerdown',e=>{if(e.target.closest('[data-act],[data-go],button,a')){try{navigator.vibrate&&navigator.vibrate(10)}catch(_){}}},true);
+app.addEventListener('input',e=>{const d=e.target.dataset||{};if(d.own!==undefined&&S.own[S.assign])S.own[S.assign][+d.own][0]=e.target.value;if(d.bname!==undefined)S.buddyName=e.target.value.trim()||'Mochi';try{localStorage.setItem(SAVE,JSON.stringify({S:S,route:route,stack:stack.slice(-30)}))}catch(_){}});
+app.addEventListener('change',e=>{const d=e.target.dataset||{},v=e.target.value;if(d.ownat===undefined&&d.at===undefined)return;if(!v)return;let ts=new Date(v).getTime();if(isNaN(ts))return;const due=dueAt(S.assign);if(ts>due)ts=due-60*60e3;
+ if(d.ownat!==undefined)S.own[S.assign][+d.ownat][2]=ts;else if(S.draft[S.assign]){S.draft[S.assign][+d.at].at=ts;S.draft[S.assign].sort((a,b)=>a.at-b.at)}
+ clearTimers();render(false)});
+const tg=document.getElementById('viewToggle');
+function paintToggle(){const on=document.body.classList.contains('phone-mode');tg.innerHTML=on?I('laptop',18)+' Laptop view':'<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><rect x="7" y="2" width="10" height="20" rx="3"/><path d="M11 18h2"/></svg> Phone view';tg.setAttribute('aria-pressed',on)}
+try{if(localStorage.getItem('hsPhone')==='1')document.body.classList.add('phone-mode')}catch(e){}
+tg.addEventListener('click',()=>{document.body.classList.toggle('phone-mode');try{localStorage.setItem('hsPhone',document.body.classList.contains('phone-mode')?'1':'0')}catch(e){}paintToggle();clearTimers();render(false)});
+paintToggle();
+let saved=null;try{saved=JSON.parse(localStorage.getItem(SAVE)||'null')}catch(e){}
+if(saved&&saved.S){Object.assign(S,saved.S);S.gStep=0;S.laptop=false;stack=Array.isArray(saved.stack)?saved.stack:[]}
+epoch();
+const start=location.hash.slice(1)||(saved&&saved.route)||'';
+route=V[start]?start:'welcome';
+if(route.startsWith('g-'))S.persona='ploy';
+render(true);
+})();
+</script>
